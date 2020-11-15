@@ -27,7 +27,7 @@ settings_t settings = {
     strobe: 255,
     fxNumber: 0,
     fxSpeed: 0.3,
-    fxSize: 255,
+    fxSize: 100,
     fxParts: 1,
     fxFade: 0,
     fxParams: 0,
@@ -68,22 +68,15 @@ void recalculateTemp() {
     else {
       p = (i%settings.fxParts)*(settings.fxSpread*PIP/(settings.fxParts-1));
     }
-    fxTemp[i] = RgbTemp_t(p, p, p);
+    if(settings.fxReverse) {
+      fxTemp[i] = RgbTemp_t(p, p, p);
+    }
+    else {
+      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
+    }
   }
   FX.needRecalculate = false;
   printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
-}
-
-bool isGrowing(double val) {
-  if(!settings.fxAttack) return false;
-  bool result = false;
-  long r = val/(PIP);
-  long t = r*PIP;
-  double reminder = val - t;
-  //printf("rem: %f, val: %f, r: %ld, t: %ld\n", reminder, val, r, t);
-  //Serial.println(reminder);
-  if(reminder <= PIP/2) result = true;
-  return result;
 }
 
 void sinus() {
@@ -92,7 +85,7 @@ void sinus() {
   if(FX.needRecalculate) recalculateTemp();
   for(int i = 0; i < settings.pixelCount; i++) {
     fxTemp[i] = RgbTemp_t(fxTemp[i].R+speed, fxTemp[i].G+speed, fxTemp[i].B+speed);
-    RgbTemp_t res(settings.fxColor.R*sin(fxTemp[i].R), settings.fxColor.G*sin(fxTemp[i].G), settings.fxColor.B*sin(fxTemp[i].B));
+     RgbTemp_t res(settings.fxColor.R*sin(fxTemp[i].R), settings.fxColor.G*sin(fxTemp[i].G), settings.fxColor.B*sin(fxTemp[i].B));
     if(settings.fxAttack) { //RRRRRRRRRRR
       if(fxData[i].R < res.R) {
       attackTemp[i].R = res.R;
@@ -406,6 +399,20 @@ void setMainSettings() {
     fgreen = request.color.G;
     fblue = request.color.B;
     ffdim = request.dimmer;
+    ///////
+    settings.fxColor = request.fxColor;
+    settings.fxFade = request.fxFade;
+    settings.fxNumber = request.fxNumber;
+    settings.fxParts = request.fxParts;
+    settings.fxParams = request.fxParams;
+    settings.fxSize = request.fxSize;
+    settings.fxSpeed = request.fxSpeed;
+    settings.fxSpread = request.fxSpread;
+    if(settings.fxReverse != request.fxParams&1) {
+      FX.needRecalculate = true;
+    }
+    settings.fxReverse = request.fxParams&1;
+    settings.fxAttack = (request.fxParams>>1)&1;
     break;
   case 129:
     settings.fxColor = request.fxColor;
@@ -418,9 +425,11 @@ void setMainSettings() {
     settings.fxSize = request.fxSize;
     settings.fxSpeed = request.fxSpeed;
     settings.fxSpread = request.fxSpread;
+    if(settings.fxReverse != request.fxParams&1) {
+      FX.needRecalculate = true;
+    }
     settings.fxReverse = request.fxParams&1;
     settings.fxAttack = (request.fxParams>>1)&1;
-    Serial.println(settings.fxAttack);
     break;
   case 255:
     saveSettingsToFs(false);
@@ -514,7 +523,8 @@ void setPixelColor(int i, RgbColor A) {
  // RgbColor A(settings.color.R, settings.color.G, settings.color.B);
   RgbColor B(fxData[i].R, fxData[i].G, fxData[i].B);
   //RgbColor ccolor(RgbColor((B.B == 0 ? A.R : 0) + B.R, (B.B == 0 ? A.G : 0) + B.G, (B.B == 0 ? A.B : 0) + B.B));
-    RgbColor ccolor(RgbColor(A.R + B.R, A.G + B.G, A.B + B.B));
+  double fxDim = normToDouble(settings.fxSize, 0, 100, 0.0, 1.0);
+    RgbColor ccolor(RgbColor(A.R + fxDim*B.R, A.G + fxDim*B.G, A.B + fxDim*B.B));
   //printf("r: %d, g: %d, b: %d\n", ccolor.R, ccolor.G, ccolor.B);
   strip.SetPixelColor(i, ccolor);
 }
@@ -599,6 +609,21 @@ double widthToDouble(uint8_t width) {
   }
   else if(WIDTH_MIN_DOUBLE == 0) {
     result = width*scale + WIDTH_MAX_DOUBLE;
+  }
+  return result;
+}
+
+double normToDouble(uint8_t val, uint8_t inMin, uint8_t inMax, double outMin, double outMax) {
+  double result;
+  double scale = (outMax - outMin)/(inMax - inMin);
+   if((outMin == 0 && inMin == 0) || (outMin != 0 && inMin != 0)) {
+    result = val*scale;
+  }
+  else if(inMin == 0) {
+    result = val*scale + outMin;
+  }
+  else if(outMin == 0) {
+    result = val*scale + outMax;
   }
   return result;
 }

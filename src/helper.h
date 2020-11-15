@@ -13,7 +13,7 @@
 #define PORT_IN 6454
 #define PORT_OUT 6455
 #define PORT_OUT_UPD 6457
-#define VERSION "v_0.0.1"
+#define VERSION "v_0.0.2"
 #define UNI 10
 #define MAIN_FILE "/mainfile"
 #define NAME_FILE "/namefile"
@@ -56,7 +56,7 @@ extern RgbTemp_t *attackTemp;
 //main settings type
 typedef struct {
     char* name;
-    uint8_t netMode; //0 - standalone, 1 - client
+    uint8_t netMode; //0 -0 standalone, 1 - client
     int pixelCount;
     char* network;
     char* password;
@@ -144,3 +144,4 @@ uint8_t widthToInt(double parts);
 void setRandomSsidName();
 void processFx();
 void clearFxData();
+double normToDouble(uint8_t value, uint8_t inMin, uint8_t inMax, double outMin, double outMax);

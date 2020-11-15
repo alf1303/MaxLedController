@@ -105,6 +105,7 @@ void readUDP() {
           request.strobe = hData2[10];
           request.fxNumber = hData1[2];
           request.fxSpeed = speedToDouble(hData1[3]);
+          printf("recSize: %d\n", request.fxSize);
           request.fxSize = hData2[11];
           request.fxParts = hData2[12];
           if(request.fxParts != settings.fxParts) {
@@ -174,7 +175,7 @@ void readUDP() {
     }
 printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
 printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
-printf("**udpreceive** fxSpread: %d, fxWidth: %f\n", settings.fxSpread, settings.fxWidth);
+printf("**udpreceive** fxSpread: %d, fxWidth: %f, fxParams: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, settings.fxSize);
   }
 }
 
