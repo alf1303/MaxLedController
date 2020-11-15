@@ -27,7 +27,7 @@ extern FxController FX;
 
 extern uint8_t hData[5];
 extern uint8_t hData1[13];
-extern uint8_t hData2[15];
+extern uint8_t hData2[17];
 extern char command;
 extern char option; 
 extern int mask;
@@ -51,6 +51,7 @@ struct RgbTemp_t{
 };
 
 extern RgbTemp_t *fxTemp;
+extern RgbTemp_t *attackTemp;
 
 //main settings type
 typedef struct {
@@ -69,9 +70,13 @@ typedef struct {
     uint8_t fxSize;
     uint8_t fxParts;
     uint8_t fxFade;
-    uint8_t fxReverse;
+    uint8_t fxParams;
+    uint8_t fxSpread;
+    double fxWidth;
     uint8_t startPixel;
     uint8_t endPixel;
+    boolean fxReverse;
+    boolean fxAttack;
 } settings_t;
 
 //playlist item setting type
@@ -85,7 +90,11 @@ typedef struct {
     uint8_t fxSize;
     uint8_t fxParts;
     uint8_t fxFade;
-    uint8_t fxReverse;
+    uint8_t fxParams;
+    uint8_t fxSpread;
+    double fxWidth;
+    boolean fxReverse;
+    boolean fxAttack;
 } ledsettings_t;
 
 extern ledsettings_t *playlist; //array, containing data for settings to be played
@@ -130,4 +139,8 @@ void initFxData();
 void sinus();
 double speedToDouble(uint8_t speed);
 uint8_t speedToInt(double speed);
+double widthToDouble(uint8_t parts);
+uint8_t widthToInt(double parts);
 void setRandomSsidName();
+void processFx();
+void clearFxData();

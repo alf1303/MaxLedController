@@ -13,6 +13,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(200, PIN);
 FxController FX = FxController();
 RgbColor *fxData;
 RgbTemp_t *fxTemp;
+RgbTemp_t *attackTemp;
 settings_t settings = {
     "esp001\0",
     netMode: 1,
@@ -25,13 +26,17 @@ settings_t settings = {
     fxColor: blue,
     strobe: 255,
     fxNumber: 0,
-    fxSpeed: 128,
+    fxSpeed: 0.3,
     fxSize: 255,
     fxParts: 1,
     fxFade: 0,
-    fxReverse: 0,
+    fxParams: 0,
+    fxSpread: 1,
+    fxWidth: 1,
     startPixel: 0,
-    endPixel: PIXELCOUNT-1
+    endPixel: PIXELCOUNT-1,
+    fxReverse: false,
+    fxAttack: false,
 };
 
 settings_t request;
@@ -46,31 +51,83 @@ bool _highlite = false;
 
 uint8_t hData[5];
 uint8_t hData1[13];
-uint8_t hData2[15];
+uint8_t hData2[17];
 char command;
 char option;
 int mask;
 IPAddress sourceIP;
 uint8_t uni = UNI;
+#define PIP PI
 
 void recalculateTemp() {
   for(int i = 0; i < settings.pixelCount; i++) {
-    double t = 6.28/(settings.pixelCount/1);
-    fxTemp[i] = RgbTemp_t(i*t, i*t, i*t);
+    double p;
+    if(settings.fxParts == 1) {
+      p = i*(settings.fxSpread*PIP/settings.pixelCount);
+    }
+    else {
+      p = (i%settings.fxParts)*(settings.fxSpread*PIP/(settings.fxParts-1));
+    }
+    fxTemp[i] = RgbTemp_t(p, p, p);
   }
   FX.needRecalculate = false;
   printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
 }
 
+bool isGrowing(double val) {
+  if(!settings.fxAttack) return false;
+  bool result = false;
+  long r = val/(PIP);
+  long t = r*PIP;
+  double reminder = val - t;
+  //printf("rem: %f, val: %f, r: %ld, t: %ld\n", reminder, val, r, t);
+  //Serial.println(reminder);
+  if(reminder <= PIP/2) result = true;
+  return result;
+}
+
 void sinus() {
   //printf("sinus\n");
-  double speed = 0.3*(6.28/FX.fps);
+  double speed = settings.fxSpeed*((2*PIP)/FX.fps);
   if(FX.needRecalculate) recalculateTemp();
   for(int i = 0; i < settings.pixelCount; i++) {
     fxTemp[i] = RgbTemp_t(fxTemp[i].R+speed, fxTemp[i].G+speed, fxTemp[i].B+speed);
-    RgbTemp_t res(settings.fxColor.R*sin(fxTemp[i].R), settings.fxColor.G*sin(fxTemp[i].B), 100*sin(fxTemp[i].B));
+    RgbTemp_t res(settings.fxColor.R*sin(fxTemp[i].R), settings.fxColor.G*sin(fxTemp[i].G), settings.fxColor.B*sin(fxTemp[i].B));
+    if(settings.fxAttack) { //RRRRRRRRRRR
+      if(fxData[i].R < res.R) {
+      attackTemp[i].R = res.R;
+      res.R = settings.fxColor.R;
+      }
+      else {
+        if(res.R > attackTemp[i].R) {
+          attackTemp[i].R = res.R;
+          res.R = settings.fxColor.R;
+        }
+      } //GGGGGGGGGGGG
+      if(fxData[i].G < res.G) {
+      attackTemp[i].G = res.G;
+      res.G = settings.fxColor.G;
+      }
+      else {
+        if(res.G > attackTemp[i].G) {
+          attackTemp[i].G = res.G;
+          res.G = settings.fxColor.G;
+        }
+      } //BBBBBBBBBBBBBBBBBb
+      if(fxData[i].B < res.B) {
+      attackTemp[i].B = res.B;
+      res.B = settings.fxColor.B;
+      }
+      else {
+        if(res.B > attackTemp[i].B) {
+          attackTemp[i].B = res.B;
+          res.B = settings.fxColor.B;
+        }
+      }
+    }
     fxData[i] = RgbColor(res.R > 0 ? res.R : 0, res.G > 0 ? res.G : 0, res.B > 0 ? res.B : 0);
   }
+  
 }
 
 
@@ -124,11 +181,13 @@ void saveSettingsToFs(boolean first) {
     f.write(settings.fxSize); //14
     f.write(settings.fxParts); //15
     f.write(settings.fxFade); //16
-    f.write(settings.fxReverse); //17
-    f.write(settings.startPixel); //18
-    f.write(settings.startPixel>>8); //19
-    f.write(settings.endPixel); //20
-    f.write(settings.endPixel>>8); //21
+    f.write(settings.fxParams); //17
+    f.write(settings.fxSpread); //18
+    f.write(widthToInt(settings.fxWidth)); //19
+    f.write(settings.startPixel); //20
+    f.write(settings.startPixel>>8); //21
+    f.write(settings.endPixel); //22
+    f.write(settings.endPixel>>8); //23
     delay(50);
     f.close();
   }
@@ -172,9 +231,10 @@ void saveNetworkDataToFs(boolean first) {
 }
 
 void loadSettingsFromFs() {
+
   File f = LittleFS.open(MAIN_FILE, "r");
-  uint8_t temp[22];
-  f.read(temp, 22);
+  uint8_t temp[24];
+  f.read(temp, 24);
   f.close();
 
   File namefile = LittleFS.open(NAME_FILE, "r");
@@ -206,13 +266,24 @@ void loadSettingsFromFs() {
   settings.fxColor = RgbColor(temp[8], temp[9], temp[10]);
   settings.strobe = temp[11];
   settings.fxNumber = temp[12];
-  settings.fxSpeed = temp[13];
-  settings.fxSize = speedToDouble(temp[14]);
+  if(settings.fxNumber == 0) 
+    FX.fxRunning = false;
+  else
+  {
+    FX.fxRunning = true;
+  }
+  FX.previousFxNum = settings.fxNumber;
+  settings.fxSpeed = speedToDouble(temp[13]);
+  settings.fxSize = temp[14];
   settings.fxParts = temp[15];
   settings.fxFade = temp[16];
-  settings.fxReverse = temp[17];
-  settings.startPixel = temp[18] + (temp[19]<<8);
-  settings.endPixel = temp[20] + (temp[21]<<8);
+  settings.fxParams = temp[17];
+  settings.fxSpread = temp[18];
+  settings.fxWidth = widthToDouble(temp[19]);
+  settings.fxReverse = settings.fxParams&1;
+  settings.fxAttack = (settings.fxParams>>1)&1;
+  settings.startPixel = temp[20] + (temp[21]<<8);
+  settings.endPixel = temp[22] + (temp[23]<<8);
 }
 
 void processGetCommand() {
@@ -271,11 +342,13 @@ void formAnswerInfo(int portOUT) {
   wifiUDP.write(settings.fxSize); //41
   wifiUDP.write(settings.fxParts); //42
   wifiUDP.write(settings.fxFade); //43
-  wifiUDP.write(settings.fxReverse); //44
-  wifiUDP.write(settings.netMode); //45
-  wifiUDP.write(strlen(settings.name)); //46
-  wifiUDP.write(strlen(settings.network)); //47
-  wifiUDP.write(strlen(settings.password)); //48
+  wifiUDP.write(settings.fxParams); //44
+  wifiUDP.write(settings.fxSpread); //45
+  wifiUDP.write(widthToInt(settings.fxWidth)); //46
+  wifiUDP.write(settings.netMode); //47
+  wifiUDP.write(strlen(settings.name)); //48
+  wifiUDP.write(strlen(settings.network)); //49
+  wifiUDP.write(strlen(settings.password)); //50
   wifiUDP.write(settings.name);
   wifiUDP.write(settings.network);
   wifiUDP.write(settings.password);
@@ -336,12 +409,18 @@ void setMainSettings() {
     break;
   case 129:
     settings.fxColor = request.fxColor;
+    break;
+  case 130:
     settings.fxFade = request.fxFade;
     settings.fxNumber = request.fxNumber;
     settings.fxParts = request.fxParts;
-    settings.fxReverse = request.fxReverse;
+    settings.fxParams = request.fxParams;
     settings.fxSize = request.fxSize;
     settings.fxSpeed = request.fxSpeed;
+    settings.fxSpread = request.fxSpread;
+    settings.fxReverse = request.fxParams&1;
+    settings.fxAttack = (request.fxParams>>1)&1;
+    Serial.println(settings.fxAttack);
     break;
   case 255:
     saveSettingsToFs(false);
@@ -466,7 +545,7 @@ void test2() {
 
 uint8_t speedToInt(double speed) {
   double result;
-  double scale = (SPEED_MAX_INT - SPEED_MIN_INT)/(SPEED_MAX_DOUBLE - SPEED_MIN_DOUBLE);
+  double scale = (1.0*(SPEED_MAX_INT - SPEED_MIN_INT))/(SPEED_MAX_DOUBLE - SPEED_MIN_DOUBLE);
   if((SPEED_MIN_DOUBLE == 0 && SPEED_MIN_INT == 0) || (SPEED_MIN_DOUBLE != 0 && SPEED_MIN_INT != 0)) {
     result = speed*scale;
   }
@@ -490,6 +569,36 @@ double speedToDouble(uint8_t speed) {
   }
   else if(SPEED_MIN_DOUBLE == 0) {
     result = speed*scale + SPEED_MAX_DOUBLE;
+  }
+  return result;
+}
+
+uint8_t widthToInt(double width) {
+  double result;
+  double scale = (1.0*(WIDTH_MAX_INT - WIDTH_MIN_INT))/(WIDTH_MAX_DOUBLE - WIDTH_MIN_DOUBLE);
+  if((WIDTH_MIN_DOUBLE == 0 && WIDTH_MIN_INT == 0) || (WIDTH_MIN_DOUBLE != 0 && WIDTH_MIN_INT != 0)) {
+    result = width*scale;
+  }
+  else if(WIDTH_MIN_DOUBLE == 0) {
+    result = width*scale + WIDTH_MIN_INT;
+  }
+  else if(WIDTH_MIN_INT == 0) {
+    result = width*scale + WIDTH_MAX_INT;
+  }
+  return result;
+}
+
+double widthToDouble(uint8_t width) {
+  double result;
+  double scale = (WIDTH_MAX_DOUBLE - WIDTH_MIN_DOUBLE)/(WIDTH_MAX_INT - WIDTH_MIN_INT);
+   if((WIDTH_MIN_DOUBLE == 0 && WIDTH_MIN_INT == 0) || (WIDTH_MIN_DOUBLE != 0 && WIDTH_MIN_INT != 0)) {
+    result = width*scale;
+  }
+  else if(WIDTH_MIN_INT == 0) {
+    result = width*scale + WIDTH_MIN_DOUBLE;
+  }
+  else if(WIDTH_MIN_DOUBLE == 0) {
+    result = width*scale + WIDTH_MAX_DOUBLE;
   }
   return result;
 }

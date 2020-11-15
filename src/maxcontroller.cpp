@@ -97,7 +97,7 @@ void readUDP() {
         //if main settings + pixel settings
         if(hData[4] == 'S') {
           wifiUDP.read(hData1, 13);
-          wifiUDP.read(hData2, 15);
+          wifiUDP.read(hData2, 17);
           mask = hData1[8];
           request.dimmer = hData1[7];
           request.color = RgbColor(hData1[4], hData1[5], hData1[6]);
@@ -107,12 +107,20 @@ void readUDP() {
           request.fxSpeed = speedToDouble(hData1[3]);
           request.fxSize = hData2[11];
           request.fxParts = hData2[12];
+          if(request.fxParts != settings.fxParts) {
+            FX.needRecalculate = true;
+          }
           request.fxFade = hData2[13];
-          request.fxReverse = hData2[14];
+          request.fxParams = hData2[14];
+          request.fxSpread = hData2[15];
+          request.fxWidth = widthToDouble(hData2[16]);
+          if(request.fxSpread != settings.fxSpread) {
+            FX.needRecalculate = true;
+          }
           request.pixelCount = hData2[0] + (hData2[4]<<8);
           request.startPixel = hData2[1] + (hData2[5]<<8);
           request.endPixel = hData2[2] + (hData2[6]<<8);
-          printf("\n");
+        
         }
         //if name settings
         if(hData[4] == 'N') {
@@ -165,6 +173,8 @@ void readUDP() {
       processRequest();
     }
 printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
+printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
+printf("**udpreceive** fxSpread: %d, fxWidth: %f\n", settings.fxSpread, settings.fxWidth);
   }
 }
 
@@ -191,14 +201,16 @@ void setup() {
   startUdpServer();
   OTA_Func();
   updateSendTicker.attach(2, update);
-  fxTicker.attach_ms(1000/FX.fps, sinus);
+  //fxTicker.attach_ms(1000/FX.fps, sinus);
   //printf("0: %d, 0.5: %d, 1.0: %d, 2.0: %d *** 0: %f, 25: %f, 50: %f, 100: %f\n", speedToInt(0), speedToInt(0.5), speedToInt(1), speedToInt(2), speedToDouble(0), speedToDouble(25), speedToDouble(50), speedToDouble(100));
   printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
   printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
+  printf("**setup** fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d\n",settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread);
 }
 
 void loop() {
   readUDP();
+  processFx();
   outToStrip();
   if(toAnswer) {
     formAnswerInfo(PORT_OUT_UPD);
@@ -210,6 +222,11 @@ void loop() {
 void initFxData() {
   fxData = new RgbColor[settings.pixelCount]();
   fxTemp = new RgbTemp_t[settings.pixelCount];
+  attackTemp = new RgbTemp_t[settings.pixelCount];
+  clearFxData();
+}
+
+void clearFxData() {
   for(int i = 0; i < settings.pixelCount; i++) {
     fxData[i] = black;
     fxTemp[i] = RgbTemp_t(0, 0, 0);
@@ -223,3 +240,37 @@ void setRandomSsidName() {
  strcat(ssid, mac);
 }
 
+void processFx() {
+  switch(settings.fxNumber) {
+    case 0:
+      if(FX.fxRunning) {
+        fxTicker.detach();
+        clearFxData();
+        FX.fxRunning = false;
+        FX.needRecalculate = true;
+        if(FX.previousFxNum != 0) FX.previousFxNum = 0;
+        printf("Stopped FX...\n");
+      }
+      break;
+    case 1:
+      if(!fxTicker.active()) {
+        fxTicker.attach_ms(1000/FX.fps, sinus);
+        FX.fxRunning = true;
+      }
+      if(fxTicker.active() && FX.previousFxNum != 1) {
+        fxTicker.detach();
+        clearFxData();
+        fxTicker.attach_ms(1000/FX.fps, sinus);
+        FX.previousFxNum = 1;
+        FX.fxRunning = true;
+      }
+      break;
+    case 2:
+      if(FX.previousFxNum != 2) FX.previousFxNum = 2;
+      break;
+    
+    default:
+      printf("***Wrong fxNumber\n");
+      break;
+  }
+}
