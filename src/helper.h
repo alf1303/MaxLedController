@@ -13,7 +13,7 @@
 #define PORT_IN 6454
 #define PORT_OUT 6455
 #define PORT_OUT_UPD 6457
-#define VERSION "v_0.0.2"
+#define VERSION "v_0.1.0"
 #define UNI 10
 #define MAIN_FILE "/mainfile"
 #define NAME_FILE "/namefile"
