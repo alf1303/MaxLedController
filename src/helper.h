@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <NeoPixelBus.h>
+#include <NeoPixelAnimator.h>
 #include <LittleFS.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
@@ -72,7 +73,7 @@ typedef struct {
     uint8_t fxFade;
     uint8_t fxParams;
     uint8_t fxSpread;
-    double fxWidth;
+    uint8_t fxWidth;
     uint8_t startPixel;
     uint8_t endPixel;
     boolean fxReverse;
@@ -92,7 +93,7 @@ typedef struct {
     uint8_t fxFade;
     uint8_t fxParams;
     uint8_t fxSpread;
-    double fxWidth;
+    uint8_t fxWidth;
     boolean fxReverse;
     boolean fxAttack;
 } ledsettings_t;
@@ -137,11 +138,19 @@ void test2();
 void startUdpServer();
 void initFxData();
 void sinus();
+void setRandomSsidName();
+void processFx();
+void clearFxData();
 double speedToDouble(uint8_t speed);
 uint8_t speedToInt(double speed);
 double widthToDouble(uint8_t parts);
 uint8_t widthToInt(double parts);
-void setRandomSsidName();
-void processFx();
-void clearFxData();
 double normToDouble(uint8_t value, uint8_t inMin, uint8_t inMax, double outMin, double outMax);
+
+void setupAnimations();
+void moveAnim(const AnimationParam& param);
+void fadeAnim(const AnimationParam& param);
+void fadeAll();
+extern NeoPixelAnimator animations;
+extern uint16_t lastPixel;
+extern int8_t moveDir;

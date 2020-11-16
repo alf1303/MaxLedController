@@ -105,7 +105,6 @@ void readUDP() {
           request.strobe = hData2[10];
           request.fxNumber = hData1[2];
           request.fxSpeed = speedToDouble(hData1[3]);
-          printf("recSize: %d\n", request.fxSize);
           request.fxSize = hData2[11];
           request.fxParts = hData2[12];
           if(request.fxParts != settings.fxParts) {
@@ -114,7 +113,8 @@ void readUDP() {
           request.fxFade = hData2[13];
           request.fxParams = hData2[14];
           request.fxSpread = hData2[15];
-          request.fxWidth = widthToDouble(hData2[16]);
+          request.fxWidth = hData2[16];
+          printf("** udp read, recSize: %d, width: %d\n", request.fxSize, hData2[16]);
           if(request.fxSpread != settings.fxSpread) {
             FX.needRecalculate = true;
           }
@@ -267,7 +267,13 @@ void processFx() {
       }
       break;
     case 2:
-      if(FX.previousFxNum != 2) FX.previousFxNum = 2;
+      if(fxTicker.active()) fxTicker.detach();
+      if(FX.previousFxNum != 2) {
+        clearFxData();
+        setupAnimations();
+        FX.previousFxNum = 2;
+      }
+      animations.UpdateAnimations();
       break;
     
     default:

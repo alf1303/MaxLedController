@@ -5,4 +5,4 @@
 #define WIDTH_MIN_INT 1
 #define WIDTH_MAX_INT 100
 #define WIDTH_MIN_DOUBLE 0.8
-#define WIDTH_MAX_DOUBLE 3
+#define WIDTH_MAX_DOUBLE 3.0

@@ -32,7 +32,7 @@ settings_t settings = {
     fxFade: 0,
     fxParams: 0,
     fxSpread: 1,
-    fxWidth: 1,
+    fxWidth: 0.8,
     startPixel: 0,
     endPixel: PIXELCOUNT-1,
     fxReverse: false,
@@ -123,6 +123,59 @@ void sinus() {
   
 }
 
+NeoPixelAnimator animations(2);
+uint16_t lastPixel = 0;
+int8_t moveDir = 1;
+
+void fadeAll() {
+    RgbColor color;
+    for(uint16_t i = 0; i < settings.pixelCount; i++) {
+        fxData[i].Darken(settings.fxWidth);
+    }
+}
+
+void fadeAnim(const AnimationParam& param) {
+    if(param.state == AnimationState_Completed) {
+        fadeAll();
+        animations.RestartAnimation(param.index);
+    }
+}
+
+void moveAnim(const AnimationParam& param) {
+  uint16_t nextPixel;
+  float progress = NeoEase::SinusoidalInOut(param.progress);
+    if (moveDir > 0)
+    {
+        nextPixel = progress * settings.pixelCount;
+    }
+    else
+    {
+        nextPixel = (1.0f - progress) * settings.pixelCount;
+    }
+
+   if (lastPixel != nextPixel)
+    {
+        for (uint16_t i = lastPixel + moveDir; i != nextPixel; i += moveDir)
+        {
+            fxData[i] = settings.fxColor;
+        }
+    }
+    fxData[nextPixel] = settings.fxColor;
+
+    lastPixel = nextPixel;
+
+    if(param.state == AnimationState_Completed) {
+      moveDir *= -1;
+      animations.RestartAnimation(param.index);
+    }
+
+}
+
+void setupAnimations() {
+  animations.StartAnimation(0, 5, fadeAnim);
+  animations.StartAnimation(1, 2000, moveAnim);
+}
+
 
 
 void initSettings() {
@@ -176,7 +229,7 @@ void saveSettingsToFs(boolean first) {
     f.write(settings.fxFade); //16
     f.write(settings.fxParams); //17
     f.write(settings.fxSpread); //18
-    f.write(widthToInt(settings.fxWidth)); //19
+    f.write(settings.fxWidth); //19
     f.write(settings.startPixel); //20
     f.write(settings.startPixel>>8); //21
     f.write(settings.endPixel); //22
@@ -272,7 +325,7 @@ void loadSettingsFromFs() {
   settings.fxFade = temp[16];
   settings.fxParams = temp[17];
   settings.fxSpread = temp[18];
-  settings.fxWidth = widthToDouble(temp[19]);
+  settings.fxWidth = temp[19];
   settings.fxReverse = settings.fxParams&1;
   settings.fxAttack = (settings.fxParams>>1)&1;
   settings.startPixel = temp[20] + (temp[21]<<8);
@@ -425,6 +478,7 @@ void setMainSettings() {
     settings.fxSize = request.fxSize;
     settings.fxSpeed = request.fxSpeed;
     settings.fxSpread = request.fxSpread;
+    settings.fxWidth = request.fxWidth;
     if(settings.fxReverse != request.fxParams&1) {
       FX.needRecalculate = true;
     }
