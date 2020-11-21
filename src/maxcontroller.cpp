@@ -3,6 +3,7 @@
 
 Ticker updateSendTicker;
 Ticker fxTicker;
+Ticker fxFadeTicker;
 
 void update() {
   formAnswerInfo(PORT_OUT_UPD);
@@ -175,7 +176,7 @@ void readUDP() {
     }
 printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
 printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
-printf("**udpreceive** fxSpread: %d, fxWidth: %f, fxParams: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, settings.fxSize);
+printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, settings.fxSize);
   }
 }
 
@@ -202,11 +203,10 @@ void setup() {
   startUdpServer();
   OTA_Func();
   updateSendTicker.attach(2, update);
-  //fxTicker.attach_ms(1000/FX.fps, sinus);
   //printf("0: %d, 0.5: %d, 1.0: %d, 2.0: %d *** 0: %f, 25: %f, 50: %f, 100: %f\n", speedToInt(0), speedToInt(0.5), speedToInt(1), speedToInt(2), speedToDouble(0), speedToDouble(25), speedToDouble(50), speedToDouble(100));
   printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
   printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
-  printf("**setup** fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d\n",settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread);
+  printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, fxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
 }
 
 void loop() {
@@ -241,12 +241,22 @@ void setRandomSsidName() {
  strcat(ssid, mac);
 }
 
+void stopFX() {
+  if(fxTicker.active()) fxTicker.detach();
+        if(fxFadeTicker.active()) fxFadeTicker.detach();
+        clearFxData();
+        //animations.StopAll();
+        FX.fxRunning = false;
+        FX.needRecalculate = true;
+        FX.prevIndex = -1;
+        delay(40);
+}
+
 void processFx() {
   switch(settings.fxNumber) {
     case 0:
       if(FX.fxRunning) {
-        fxTicker.detach();
-        clearFxData();
+        stopFX();
         FX.fxRunning = false;
         FX.needRecalculate = true;
         if(FX.previousFxNum != 0) FX.previousFxNum = 0;
@@ -255,25 +265,43 @@ void processFx() {
       break;
     case 1:
       if(!fxTicker.active()) {
+        stopFX();
         fxTicker.attach_ms(1000/FX.fps, sinus);
         FX.fxRunning = true;
+        FX.previousFxNum = 1;
       }
       if(fxTicker.active() && FX.previousFxNum != 1) {
-        fxTicker.detach();
-        clearFxData();
+        stopFX();
         fxTicker.attach_ms(1000/FX.fps, sinus);
         FX.previousFxNum = 1;
         FX.fxRunning = true;
       }
       break;
     case 2:
-      if(fxTicker.active()) fxTicker.detach();
       if(FX.previousFxNum != 2) {
-        clearFxData();
+        stopFX();
         setupAnimations();
+        FX.fxRunning = true;
         FX.previousFxNum = 2;
       }
+      if(FX.speedChanged) {
+        animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.speedChanged = false;
+      }
       animations.UpdateAnimations();
+      break;
+    case 3:
+      if(FX.previousFxNum != 3) {
+        stopFX();
+        setupAnimationsCyclon();
+        FX.fxRunning = true;
+        FX.previousFxNum = 3;
+      }
+      if(FX.speedChanged) {
+        animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.speedChanged = false;
+      }
+      animations2.UpdateAnimations();
       break;
     
     default:

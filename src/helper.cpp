@@ -32,7 +32,7 @@ settings_t settings = {
     fxFade: 0,
     fxParams: 0,
     fxSpread: 1,
-    fxWidth: 0.8,
+    fxWidth: 1,
     startPixel: 0,
     endPixel: PIXELCOUNT-1,
     fxReverse: false,
@@ -124,11 +124,11 @@ void sinus() {
 }
 
 NeoPixelAnimator animations(2);
+NeoPixelAnimator animations2(2);
 uint16_t lastPixel = 0;
 int8_t moveDir = 1;
 
 void fadeAll() {
-    RgbColor color;
     for(uint16_t i = 0; i < settings.pixelCount; i++) {
         fxData[i].Darken(settings.fxWidth);
     }
@@ -136,8 +136,15 @@ void fadeAll() {
 
 void fadeAnim(const AnimationParam& param) {
     if(param.state == AnimationState_Completed) {
+      //printf("FadeAnim_in\n");
         fadeAll();
-        animations.RestartAnimation(param.index);
+      //printf("FadeAnim_out\n");
+        if(animations.IsAnimating()) {
+          animations.RestartAnimation(param.index);
+        }
+        if(animations2.IsAnimating()) {
+          animations2.RestartAnimation(param.index);
+        }
     }
 }
 
@@ -146,20 +153,22 @@ void moveAnim(const AnimationParam& param) {
   float progress = NeoEase::SinusoidalInOut(param.progress);
     if (moveDir > 0)
     {
-        nextPixel = progress * settings.pixelCount;
+        nextPixel = progress * (settings.pixelCount-1);
     }
     else
     {
-        nextPixel = (1.0f - progress) * settings.pixelCount;
+        nextPixel = (1.0f - progress) * (settings.pixelCount-1);
     }
 
    if (lastPixel != nextPixel)
     {
         for (uint16_t i = lastPixel + moveDir; i != nextPixel; i += moveDir)
         {
+          if(i >= settings.pixelCount) break;
             fxData[i] = settings.fxColor;
         }
     }
+    //printf("np: %d\n", nextPixel);
     fxData[nextPixel] = settings.fxColor;
 
     lastPixel = nextPixel;
@@ -172,11 +181,83 @@ void moveAnim(const AnimationParam& param) {
 }
 
 void setupAnimations() {
-  animations.StartAnimation(0, 5, fadeAnim);
-  animations.StartAnimation(1, 2000, moveAnim);
+     animations.StartAnimation(0, 15, fadeAnim);
+     animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), moveAnim);
 }
 
+void setupAnimationsCyclon() {
+    animations2.StartAnimation(0, 15, fadeAnim);
+    animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), animCyclon);
+}
 
+void animCyclon(const AnimationParam& param) {
+  float progress = NeoEase::Linear(param.progress);
+  //float progress_step = progress/settings.fxParts;
+  uint16_t fxParts_tmp = settings.fxParts == 1 ? settings.pixelCount : settings.fxParts;
+   float progress_step = 1.0f/fxParts_tmp;
+  size_t progresses_size = (int)ceil(1/progress_step) +1;
+  uint16_t indexes[settings.pixelCount];
+  float progresses[settings.pixelCount];
+  uint16_t* ind_t = indexes;
+  float* progr_t = progresses;
+  uint16_t j = 0;
+  //printf("progr: %f, fxPartsT: %d, progrSize: %d, indexSize: %d, progrStep: %f\n",progress, fxParts_tmp, progresses_size, indexes_size, progress_step);
+  while (j < progresses_size)  {
+    *progr_t = j * progress_step;
+    j++;
+    progr_t++;
+  }
+  *progr_t = 1.0f;
+  uint16_t i = 0;
+  uint16_t tmpind = 0;
+  while(i < (progresses_size - 1)) {
+    if((progress >= progresses[i]) && (progress <= progresses[i+1])) {
+      for(int k = 0; k < settings.pixelCount; k++) {
+        if((k%fxParts_tmp) == i) {
+          uint16_t cc = k + fxParts_tmp - (i*2+1);
+          //printf("k: %d, cc: %d\n", k, cc);
+          if(!settings.fxSymm) {
+            *ind_t = settings.fxReverse ? (settings.pixelCount - k - 1) : k;
+            ind_t++;
+            tmpind++;
+          }
+          else {
+            if(cc < settings.pixelCount && cc >= 0 && cc >= k) {
+              //*ind_t = k;
+              *ind_t = settings.fxReverse ? (fxParts_tmp - k - 1) : k;
+              printf("k: %d, cc: %d, ind: %d,  ", k, cc, *ind_t);
+              ind_t++;
+              tmpind++;
+              //*ind_t = cc;
+              *ind_t = settings.fxReverse ? (fxParts_tmp - cc + 1) : cc;
+              printf("ind2: %d\n", *ind_t);
+              ind_t++;
+              tmpind++;
+          }
+          }
+        }
+      }
+    }
+    i++;
+  }
+ind_t = indexes;
+uint16_t h = 0;
+//printf("tmpind: %d\n", tmpind);
+  while (h < tmpind)
+  {
+    //printf("h: %d, ind: %d\n",h, *ind_t);
+    if(*ind_t < settings.pixelCount && *ind_t >= 0) {
+      fxData[*ind_t] = settings.fxColor;
+    }
+    ind_t++;
+    h++;
+  }
+  if(param.state == AnimationState_Completed) {
+      FX.prevIndex = -1;
+      animations2.RestartAnimation(param.index);
+    }
+
+}
 
 void initSettings() {
   if(!LittleFS.exists(MAIN_FILE)) {
@@ -318,7 +399,7 @@ void loadSettingsFromFs() {
   {
     FX.fxRunning = true;
   }
-  FX.previousFxNum = settings.fxNumber;
+  //FX.previousFxNum = settings.fxNumber;
   settings.fxSpeed = speedToDouble(temp[13]);
   settings.fxSize = temp[14];
   settings.fxParts = temp[15];
@@ -328,6 +409,7 @@ void loadSettingsFromFs() {
   settings.fxWidth = temp[19];
   settings.fxReverse = settings.fxParams&1;
   settings.fxAttack = (settings.fxParams>>1)&1;
+  settings.fxSymm = (settings.fxParams>>2)&1;
   settings.startPixel = temp[20] + (temp[21]<<8);
   settings.endPixel = temp[22] + (temp[23]<<8);
 }
@@ -390,7 +472,7 @@ void formAnswerInfo(int portOUT) {
   wifiUDP.write(settings.fxFade); //43
   wifiUDP.write(settings.fxParams); //44
   wifiUDP.write(settings.fxSpread); //45
-  wifiUDP.write(widthToInt(settings.fxWidth)); //46
+  wifiUDP.write(settings.fxWidth); //46
   wifiUDP.write(settings.netMode); //47
   wifiUDP.write(strlen(settings.name)); //48
   wifiUDP.write(strlen(settings.network)); //49
@@ -461,11 +543,15 @@ void setMainSettings() {
     settings.fxSize = request.fxSize;
     settings.fxSpeed = request.fxSpeed;
     settings.fxSpread = request.fxSpread;
-    if(settings.fxReverse != request.fxParams&1) {
+    if(settings.fxReverse != (request.fxParams&1)) {
       FX.needRecalculate = true;
     }
     settings.fxReverse = request.fxParams&1;
     settings.fxAttack = (request.fxParams>>1)&1;
+    if(settings.fxSymm != ((request.fxParams>>2)&1)) {
+      FX.needRecalculate = true;
+    }
+    settings.fxSymm = (request.fxParams>>2)&1;
     break;
   case 129:
     settings.fxColor = request.fxColor;
@@ -476,14 +562,18 @@ void setMainSettings() {
     settings.fxParts = request.fxParts;
     settings.fxParams = request.fxParams;
     settings.fxSize = request.fxSize;
+    if(settings.fxSpeed != request.fxSpeed) {
+      FX.speedChanged = true;
+    }
     settings.fxSpeed = request.fxSpeed;
     settings.fxSpread = request.fxSpread;
     settings.fxWidth = request.fxWidth;
-    if(settings.fxReverse != request.fxParams&1) {
+    if(settings.fxReverse != (request.fxParams&1)) {
       FX.needRecalculate = true;
     }
     settings.fxReverse = request.fxParams&1;
     settings.fxAttack = (request.fxParams>>1)&1;
+    settings.fxSymm = (request.fxParams>>2)&1;
     break;
   case 255:
     saveSettingsToFs(false);

@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 int main() {
+    uint16_t kj = 2;
+    float ff = 2.123;
+    float fff = kj*ff;
+    printf("***************: %f\n", fff);
     uint8_t params;
     params = 255;
     printf("%d\n", params);

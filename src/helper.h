@@ -78,6 +78,7 @@ typedef struct {
     uint8_t endPixel;
     boolean fxReverse;
     boolean fxAttack;
+    boolean fxSymm;
 } settings_t;
 
 //playlist item setting type
@@ -96,6 +97,7 @@ typedef struct {
     uint8_t fxWidth;
     boolean fxReverse;
     boolean fxAttack;
+    boolean fxSymm;
 } ledsettings_t;
 
 extern ledsettings_t *playlist; //array, containing data for settings to be played
@@ -148,9 +150,12 @@ uint8_t widthToInt(double parts);
 double normToDouble(uint8_t value, uint8_t inMin, uint8_t inMax, double outMin, double outMax);
 
 void setupAnimations();
+void setupAnimationsCyclon();
 void moveAnim(const AnimationParam& param);
 void fadeAnim(const AnimationParam& param);
 void fadeAll();
+void animCyclon(const AnimationParam& param);
 extern NeoPixelAnimator animations;
+extern NeoPixelAnimator animations2;
 extern uint16_t lastPixel;
 extern int8_t moveDir;
