@@ -1,11 +1,11 @@
 #include "helper.h"
 #include "Ticker.h"
 
-Ticker updateSendTicker;
-Ticker fxTicker;
-Ticker fxFadeTicker;
+Ticker updateSendTicker; ////
+Ticker fxTicker;////
+Ticker fxFadeTicker;////
 
-void update() {
+void update() {////
   formAnswerInfo(PORT_OUT_UPD);
 }
 
@@ -188,8 +188,8 @@ void setup() {
   //LittleFS.format();
   setRandomSsidName();
   printf("%s\n", ssid);
-  initSettings();
-  initFxData();
+  initSettings();////
+  initFxData();////
   test2();
   if(settings.netMode == 0) {
     connectWiFi_AP();
@@ -211,8 +211,8 @@ void setup() {
 
 void loop() {
   readUDP();
-  processFx();
-  outToStrip();
+  processFx();////
+  outToStrip();////
   if(toAnswer) {
     formAnswerInfo(PORT_OUT_UPD);
     toAnswer = false;
@@ -223,6 +223,7 @@ void loop() {
 void initFxData() {
   fxData = new RgbColor[settings.pixelCount]();
   fxTemp = new RgbTemp_t[settings.pixelCount];
+  rgbData = new double[settings.pixelCount];
   attackTemp = new RgbTemp_t[settings.pixelCount];
   clearFxData();
 }
@@ -231,6 +232,7 @@ void clearFxData() {
   for(int i = 0; i < settings.pixelCount; i++) {
     fxData[i] = black;
     fxTemp[i] = RgbTemp_t(0, 0, 0);
+    rgbData[i] = 0;
   }
 }
 
@@ -248,7 +250,9 @@ void stopFX() {
         //animations.StopAll();
         FX.fxRunning = false;
         FX.needRecalculate = true;
+        FX.rndShouldGo = -1;
         FX.prevIndex = -1;
+        FX.lastPixel = 0;
         delay(40);
 }
 
@@ -302,6 +306,20 @@ void processFx() {
         FX.speedChanged = false;
       }
       animations2.UpdateAnimations();
+      break;
+    case 4:
+      if(!fxTicker.active()) {
+        stopFX();
+        fxTicker.attach_ms(1000/FX.fps, sinusRGB);
+        FX.fxRunning = true;
+        FX.previousFxNum = 4;
+      }
+      if(fxTicker.active() && FX.previousFxNum != 4) {
+        stopFX();
+        fxTicker.attach_ms(1000/FX.fps, sinus);
+        FX.previousFxNum = 4;
+        FX.fxRunning = true;
+      }
       break;
     
     default:

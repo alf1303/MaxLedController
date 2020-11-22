@@ -10,10 +10,16 @@ int fade_ms = 600;
 uint8_t fade_frame_dur = 30;
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(200, PIN);
-FxController FX = FxController();
-RgbColor *fxData;
-RgbTemp_t *fxTemp;
-RgbTemp_t *attackTemp;
+
+NeoPixelAnimator animations(2);////
+NeoPixelAnimator animations2(2);////
+FxController FX = FxController();////
+RgbColor *fxData;////
+double *rgbData;////
+RgbTemp_t *fxTemp;////
+RgbTemp_t *attackTemp;////
+settings_t *playlist;////
+
 settings_t settings = {
     "esp001\0",
     netMode: 1,
@@ -68,20 +74,43 @@ void recalculateTemp() {
     else {
       p = (i%settings.fxParts)*(settings.fxSpread*PIP/(settings.fxParts-1));
     }
-    if(settings.fxReverse) {
+
+    if(settings.fxSymm) {
+      if(settings.fxReverse) {
+      fxTemp[i] = RgbTemp_t(p, p, p);
+      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
+    }
+    else {
+      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
+      fxTemp[i] = RgbTemp_t(p, p, p);
+
+    }
+    }
+    else {
+      if(settings.fxReverse) {
       fxTemp[i] = RgbTemp_t(p, p, p);
     }
     else {
       fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
     }
+    }
   }
   FX.needRecalculate = false;
-  printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
+  //printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
+}
+
+void recalculateTempRGB() {
+  for(int i = 0; i < settings.pixelCount; i++) {
+    rgbData[settings.pixelCount - i - 1] = (int)(i*(360.0/settings.pixelCount)*normToDouble(settings.fxParts, PARTS_MIN_INT, PARTS_MAX_INT, PARTS_MIN_DOUBLE, PARTS_MAX_DOUBLE))%360;
+    //printf("rgbData: i: %d, %f\n", i, rgbData[i]);
+  }
+  FX.needRecalculate = false;
+  //printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
 }
 
 void sinus() {
   //printf("sinus\n");
-  double speed = settings.fxSpeed*((2*PIP)/FX.fps);
+  double speed = (settings.fxSpeed/4)*((2*PIP)/FX.fps);
   if(FX.needRecalculate) recalculateTemp();
   for(int i = 0; i < settings.pixelCount; i++) {
     fxTemp[i] = RgbTemp_t(fxTemp[i].R+speed, fxTemp[i].G+speed, fxTemp[i].B+speed);
@@ -123,10 +152,16 @@ void sinus() {
   
 }
 
-NeoPixelAnimator animations(2);
-NeoPixelAnimator animations2(2);
-uint16_t lastPixel = 0;
-int8_t moveDir = 1;
+void sinusRGB() {
+  double speed = settings.fxSpeed;
+  if(FX.needRecalculate) recalculateTempRGB();
+  for(int i = 0; i < settings.pixelCount; i++) {
+    rgbData[i] = rgbData[i] + speed;
+    double t = ((int)rgbData[i])%360;
+    RgbColor col = HslColor(t/360.0, 1.0f, 0.5);
+      fxData[i] = col;
+  }
+}
 
 void fadeAll() {
     for(uint16_t i = 0; i < settings.pixelCount; i++) {
@@ -136,9 +171,7 @@ void fadeAll() {
 
 void fadeAnim(const AnimationParam& param) {
     if(param.state == AnimationState_Completed) {
-      //printf("FadeAnim_in\n");
         fadeAll();
-      //printf("FadeAnim_out\n");
         if(animations.IsAnimating()) {
           animations.RestartAnimation(param.index);
         }
@@ -151,7 +184,7 @@ void fadeAnim(const AnimationParam& param) {
 void moveAnim(const AnimationParam& param) {
   uint16_t nextPixel;
   float progress = NeoEase::SinusoidalInOut(param.progress);
-    if (moveDir > 0)
+    if (FX.moveDir > 0)
     {
         nextPixel = progress * (settings.pixelCount-1);
     }
@@ -160,9 +193,9 @@ void moveAnim(const AnimationParam& param) {
         nextPixel = (1.0f - progress) * (settings.pixelCount-1);
     }
 
-   if (lastPixel != nextPixel)
+   if (FX.lastPixel != nextPixel)
     {
-        for (uint16_t i = lastPixel + moveDir; i != nextPixel; i += moveDir)
+        for (uint16_t i = FX.lastPixel + FX.moveDir; i != nextPixel; i += FX.moveDir)
         {
           if(i >= settings.pixelCount) break;
             fxData[i] = settings.fxColor;
@@ -171,10 +204,10 @@ void moveAnim(const AnimationParam& param) {
     //printf("np: %d\n", nextPixel);
     fxData[nextPixel] = settings.fxColor;
 
-    lastPixel = nextPixel;
+    FX.lastPixel = nextPixel;
 
     if(param.state == AnimationState_Completed) {
-      moveDir *= -1;
+      FX.moveDir *= -1;
       animations.RestartAnimation(param.index);
     }
 
@@ -197,19 +230,41 @@ void animCyclon(const AnimationParam& param) {
    float progress_step = 1.0f/fxParts_tmp;
   size_t progresses_size = (int)ceil(1/progress_step) +1;
   uint16_t indexes[settings.pixelCount];
-  float progresses[settings.pixelCount];
+  float progresses[102];
   uint16_t* ind_t = indexes;
   float* progr_t = progresses;
   uint16_t j = 0;
+  uint16_t tmpind = 0;
+  RgbColor colo;
+  if(settings.fxRndColor) {
+    colo = HslColor(random(360)/360.0f, 1.0f, 0.5);
+  }
+  else {
+    colo = settings.fxColor;
+  }
   //printf("progr: %f, fxPartsT: %d, progrSize: %d, indexSize: %d, progrStep: %f\n",progress, fxParts_tmp, progresses_size, indexes_size, progress_step);
-  while (j < progresses_size)  {
+  if(settings.fxRnd) {
+    if(FX.rndShouldGo == -1) {
+      FX.rndShouldGo = 0;
+    uint16_t count = settings.fxSpread;
+    while (count > 0) {
+      uint16_t pixel = random(settings.pixelCount);
+      *ind_t = pixel;
+      ind_t++; 
+      tmpind++;
+      count--;
+    }
+    }
+
+  }
+  else{
+    while (j < progresses_size)  {
     *progr_t = j * progress_step;
     j++;
     progr_t++;
   }
   *progr_t = 1.0f;
   uint16_t i = 0;
-  uint16_t tmpind = 0;
   while(i < (progresses_size - 1)) {
     if((progress >= progresses[i]) && (progress <= progresses[i+1])) {
       for(int k = 0; k < settings.pixelCount; k++) {
@@ -222,17 +277,27 @@ void animCyclon(const AnimationParam& param) {
             tmpind++;
           }
           else {
-            if(cc < settings.pixelCount && cc >= 0 && cc >= k) {
-              //*ind_t = k;
-              *ind_t = settings.fxReverse ? (fxParts_tmp - k - 1) : k;
-              printf("k: %d, cc: %d, ind: %d,  ", k, cc, *ind_t);
-              ind_t++;
-              tmpind++;
-              //*ind_t = cc;
-              *ind_t = settings.fxReverse ? (fxParts_tmp - cc + 1) : cc;
-              printf("ind2: %d\n", *ind_t);
-              ind_t++;
-              tmpind++;
+            if(cc < settings.pixelCount && cc >= 0) {
+              if(settings.fxReverse) {
+                if(cc >= k) {
+                  *ind_t = k;
+                  ind_t++;
+                  tmpind++;
+                  *ind_t = cc;
+                  ind_t++;
+                  tmpind++;
+                }
+              }
+              else {
+                if(cc <= k) {
+                  *ind_t = k;
+                  ind_t++;
+                  tmpind++;
+                  *ind_t = cc;
+                  ind_t++;
+                  tmpind++;
+                }
+              }
           }
           }
         }
@@ -240,23 +305,36 @@ void animCyclon(const AnimationParam& param) {
     }
     i++;
   }
+}
 ind_t = indexes;
 uint16_t h = 0;
 //printf("tmpind: %d\n", tmpind);
-  while (h < tmpind)
+if(*indexes != FX.prevIndex) {
+    while (h < tmpind)
   {
     //printf("h: %d, ind: %d\n",h, *ind_t);
     if(*ind_t < settings.pixelCount && *ind_t >= 0) {
-      fxData[*ind_t] = settings.fxColor;
+      fxData[*ind_t] = colo;
     }
     ind_t++;
     h++;
   }
+  FX.prevIndex = *indexes;
+}
   if(param.state == AnimationState_Completed) {
-      FX.prevIndex = -1;
+      FX.rndShouldGo = -1;
       animations2.RestartAnimation(param.index);
     }
+}
 
+void setRandomSeed() {
+  uint32_t seed;
+  seed = analogRead(0);
+  delay(1);
+  for(int shifts = 3; shifts < 31; shifts += 3) {
+    seed ^= analogRead(0) << shifts;
+  }
+  randomSeed(seed);
 }
 
 void initSettings() {
@@ -410,6 +488,8 @@ void loadSettingsFromFs() {
   settings.fxReverse = settings.fxParams&1;
   settings.fxAttack = (settings.fxParams>>1)&1;
   settings.fxSymm = (settings.fxParams>>2)&1;
+  settings.fxRnd = (settings.fxParams>>3)&1;
+  settings.fxRndColor = (settings.fxParams>>7)&1;
   settings.startPixel = temp[20] + (temp[21]<<8);
   settings.endPixel = temp[22] + (temp[23]<<8);
 }
@@ -552,6 +632,11 @@ void setMainSettings() {
       FX.needRecalculate = true;
     }
     settings.fxSymm = (request.fxParams>>2)&1;
+     if(settings.fxRnd != ((request.fxParams>>3)&1)) {
+      FX.needRecalculate = true;
+    }
+    settings.fxRnd = (request.fxParams>>3)&1;
+    settings.fxRndColor = (request.fxParams>>7)&1;
     break;
   case 129:
     settings.fxColor = request.fxColor;
@@ -573,7 +658,15 @@ void setMainSettings() {
     }
     settings.fxReverse = request.fxParams&1;
     settings.fxAttack = (request.fxParams>>1)&1;
+    if(settings.fxSymm != ((request.fxParams>>2)&1)) {
+      FX.needRecalculate = true;
+    }
     settings.fxSymm = (request.fxParams>>2)&1;
+    if(settings.fxRnd != ((request.fxParams>>3)&1)) {
+      FX.needRecalculate = true;
+    }
+    settings.fxRnd = (request.fxParams>>3)&1;
+    settings.fxRndColor = (request.fxParams>>7)&1;
     break;
   case 255:
     saveSettingsToFs(false);

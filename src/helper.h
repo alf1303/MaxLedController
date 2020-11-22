@@ -20,10 +20,12 @@
 #define NAME_FILE "/namefile"
 #define SSID_FILE "/ssidfile"
 #define PASS_FILE "/passfile"
+#define PLAYLIST_FILE "/playlist"
 
 extern bool toAnswer;
 extern bool isFading;
 extern WiFiUDP wifiUDP;
+
 extern FxController FX;
 
 extern uint8_t hData[5];
@@ -39,6 +41,10 @@ extern uint8_t uni;
 //NeoPixelBus
 extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
 extern RgbColor *fxData; //array, containing data of current fx
+extern double *rgbData; //for rgb effect
+extern RgbTemp_t *fxTemp; //sinus effect
+extern RgbTemp_t *attackTemp; //sinus effect
+extern settings_t *playlist;
 
 struct RgbTemp_t{
     double R;
@@ -50,9 +56,6 @@ struct RgbTemp_t{
 
     RgbTemp_t() {};
 };
-
-extern RgbTemp_t *fxTemp;
-extern RgbTemp_t *attackTemp;
 
 //main settings type
 typedef struct {
@@ -79,6 +82,8 @@ typedef struct {
     boolean fxReverse;
     boolean fxAttack;
     boolean fxSymm;
+    boolean fxRnd;
+    boolean fxRndColor;
 } settings_t;
 
 //playlist item setting type
@@ -98,6 +103,8 @@ typedef struct {
     boolean fxReverse;
     boolean fxAttack;
     boolean fxSymm;
+    boolean fxRnd;
+    boolean fxRndColor;
 } ledsettings_t;
 
 extern ledsettings_t *playlist; //array, containing data for settings to be played
@@ -137,9 +144,8 @@ void saveNameToFs(bool first);
 void loadNetworkDataFromFs();
 void initSettings();
 void test2();
+
 void startUdpServer();
-void initFxData();
-void sinus();
 void setRandomSsidName();
 void processFx();
 void clearFxData();
@@ -149,6 +155,10 @@ double widthToDouble(uint8_t parts);
 uint8_t widthToInt(double parts);
 double normToDouble(uint8_t value, uint8_t inMin, uint8_t inMax, double outMin, double outMax);
 
+void initFxData();
+void sinus();
+void sinusRGB();
+void setRandomSeed();
 void setupAnimations();
 void setupAnimationsCyclon();
 void moveAnim(const AnimationParam& param);
@@ -157,5 +167,3 @@ void fadeAll();
 void animCyclon(const AnimationParam& param);
 extern NeoPixelAnimator animations;
 extern NeoPixelAnimator animations2;
-extern uint16_t lastPixel;
-extern int8_t moveDir;
