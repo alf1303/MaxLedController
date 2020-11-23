@@ -5,16 +5,15 @@
 #include <LittleFS.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include "Ticker.h"
 #include <fxController.h>
 #include <settings.h>
-
-#define PIN 2 // pin to connect led strip, ignored for esp8266
-#define PIXELCOUNT 10 //default number of pixels in led strip
+#include <userconfig.h>
 
 #define PORT_IN 6454
 #define PORT_OUT 6455
 #define PORT_OUT_UPD 6457
-#define VERSION "v_0.1.1"
+#define VERSION "v_0.1.2"
 #define UNI 10
 #define MAIN_FILE "/mainfile"
 #define NAME_FILE "/namefile"
@@ -27,6 +26,8 @@ extern bool isFading;
 extern WiFiUDP wifiUDP;
 
 extern FxController FX;
+extern Ticker fxTicker;
+extern Ticker fxFadeTicker;
 
 extern uint8_t hData[5];
 extern uint8_t hData1[13];
@@ -37,43 +38,16 @@ extern int mask;
 extern IPAddress sourceIP;
 extern uint8_t uni;
 
-//playlist item setting type
-typedef struct {
-    uint8_t dimmer;
-    RgbColor color;
-    RgbColor fxColor;
-    uint8_t strobe;
-    uint8_t fxNumber;
-    double fxSpeed;
-    uint8_t fxSize;
-    uint8_t fxParts;
-    uint8_t fxFade;
-    uint8_t fxParams;
-    uint8_t fxSpread;
-    uint8_t fxWidth;
-    boolean fxReverse;
-    boolean fxAttack;
-    boolean fxSymm;
-    boolean fxRnd;
-    boolean fxRndColor;
-} ledsettings_t;
-
 //NeoPixelBus
 extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
-//extern RgbColor *fxData; //array, containing data of current fx
-//extern double *rgbData; //for rgb effect
-//extern RgbTemp_t *fxTemp; //sinus effect
-//extern RgbTemp_t *attackTemp; //sinus effect
 extern ledsettings_t *playlist; //array, containing data for settings to be played
-extern ledsettings_t *playlist_temp; ////
-extern NeoPixelAnimator animations;
-extern NeoPixelAnimator animations2;
+extern ledsettings_t *playlist_temp; //temp array
+extern NeoPixelAnimator animations; //cyclon effect
+extern NeoPixelAnimator animations2; //fade effect
 extern uint8_t playlistPeriod;
 extern unsigned long playlistPeriodMs; 
-extern unsigned long playlistLastTime;
-extern uint8_t playlist_counter;
-
-
+extern unsigned long playlistLastTime; //for changing playlist items while playing
+extern uint8_t playlist_counter; //for changing playlist items while playing
 
 extern settings_t settings; //main settings
 extern settings_t request; //variable for storing data, received via UDP from controll App
@@ -113,21 +87,22 @@ void test2();
 
 void startUdpServer();
 void setRandomSsidName();
-void processFx();
+
 double speedToDouble(uint8_t speed);
 uint8_t speedToInt(double speed);
 double widthToDouble(uint8_t parts);
 uint8_t widthToInt(double parts);
 
+void processFx();
+void setRandomSeed();
+void setupAnimations();
+void setupAnimationsCyclon();
 void moveAnim(const AnimationParam& param);
 void fadeAnim(const AnimationParam& param);
 void animCyclon(const AnimationParam& param);
 void sinus();
 void sinusRGB();
 
-void setRandomSeed();
-void setupAnimations();
-void setupAnimationsCyclon();
 void savePlaylist();
 void loadPlaylist();
 void processPlaylist();

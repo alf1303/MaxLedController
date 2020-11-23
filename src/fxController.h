@@ -57,8 +57,6 @@ class FxController{
         clearFxData();
     }
 
-
-
     void recalculateTempRGB() {
         for(int i = 0; i < sett->pixelCount; i++) {
             rgbData[sett->pixelCount - i - 1] = (int)(i*(360.0/sett->pixelCount)*normToDouble(sett->fxParts, PARTS_MIN_INT, PARTS_MAX_INT, PARTS_MIN_DOUBLE, PARTS_MAX_DOUBLE))%360;
@@ -102,21 +100,11 @@ class FxController{
     //printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
     }
 
-
-
     void fadeAll() {
         for(uint16_t i = 0; i < sett->pixelCount; i++) {
             fxData[i].Darken(sett->fxWidth);
         }
     }
-
-
-
-    
-
-
-
-
 
     double normToDouble(uint8_t val, uint8_t inMin, uint8_t inMax, double outMin, double outMax) {
         double result;

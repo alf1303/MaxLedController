@@ -44,6 +44,27 @@ typedef struct {
     boolean fxRndColor;
 } settings_t;
 
+//playlist item setting type
+typedef struct {
+    uint8_t dimmer;
+    RgbColor color;
+    RgbColor fxColor;
+    uint8_t strobe;
+    uint8_t fxNumber;
+    double fxSpeed;
+    uint8_t fxSize;
+    uint8_t fxParts;
+    uint8_t fxFade;
+    uint8_t fxParams;
+    uint8_t fxSpread;
+    uint8_t fxWidth;
+    boolean fxReverse;
+    boolean fxAttack;
+    boolean fxSymm;
+    boolean fxRnd;
+    boolean fxRndColor;
+} ledsettings_t;
+
 struct RgbTemp_t{
     double R;
     double G;

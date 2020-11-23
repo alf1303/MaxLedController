@@ -1,11 +1,8 @@
 #include "helper.h"
-#include "Ticker.h"
 
-Ticker updateSendTicker; ////
-Ticker fxTicker;////
-Ticker fxFadeTicker;////
+Ticker updateSendTicker; //for sending updated status to Application
 
-void update() {////
+void update() {//for sending updated status to Application
   formAnswerInfo(PORT_OUT_UPD);
 }
 
@@ -13,25 +10,19 @@ void update() {////
 IPAddress apAddress(192, 168, 11, 31);
 IPAddress apGateway(192, 168, 11, 31);
 IPAddress apSubnet(255, 255, 255, 0);
-char ssid[32] = "MaxLedNet";
-const char* password = "11223344";
-
 
 WiFiUDP wifiUDP;
 
-//Pixel Settings
-
-uint8 pixelPin = 2; //ignored for esp8266
-
-//As access point
+//Creating access point
 void connectWiFi_AP() {
   WiFi.enableAP(1);
-  bool res_config = WiFi.softAPConfig(apAddress, apGateway, apSubnet);
-  bool res_create = WiFi.softAP(ssid, password);
+  WiFi.softAPConfig(apAddress, apGateway, apSubnet);
+  WiFi.softAP(AP_SSID, AP_PASSWORD);
   delay(15);
   printf("Creating Access point...\n");
 }
 
+//udp server for sending updated status
 void startUdpServer() {
   bool res = wifiUDP.begin(PORT_IN);
   if(res == 1) 
@@ -39,10 +30,10 @@ void startUdpServer() {
   else 
     printf("Error opening UDP socket\n");
   delay(15);
-  uni = WiFi.softAPIP()[3];
+  uni = WiFi.softAPIP()[3]; //id of Esp, same as last byte of its ipaddress
 }
 
-//as client
+//Connecting to Access Point
 boolean connectWiFi() {
   boolean state = true;
   int i = 0;
@@ -80,17 +71,17 @@ boolean connectWiFi() {
     Serial.print(WiFi.localIP());
     Serial.println();
   }
-   // Open ArtNet port for WIFI
   return state;
 }
 
+//Reading values, arrived by UDP from Application
 void readUDP() {
   if(wifiUDP.parsePacket()) {
     printf("udp in\n");
     wifiUDP.read(hData, 5);
     command = hData[3];
     option = hData[4];
-    printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
+    //printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
     if(hData[0] == 'C' && hData[1] == 'P') {
       sourceIP = wifiUDP.remoteIP();
       uni = hData[2];
@@ -147,31 +138,31 @@ void readUDP() {
             wifiUDP.read(settings.password, passwordSize);
             settings.network[ssidSize] = '\0';
             settings.password[passwordSize] = '\0';
-            printf("***received: netMode: %d, ssidSize: %d, passSize: %d\n", settings.netMode, ssidSize, passwordSize);
+            //printf("***received: netMode: %d, ssidSize: %d, passSize: %d\n", settings.netMode, ssidSize, passwordSize);
             saveNetworkDataToFs(false);
             saveSettingsToFs(false);
             //setReset();
           }
         }
 
+        //if pixel settings
         if(hData[4] == 'P') {
           fxTicker.detach();
           uint8_t low = wifiUDP.read();
           uint8_t high = wifiUDP.read();
-          printf("low: %d, high: %d, result: %d\n", low, high, low + (high << 8));
+          //printf("low: %d, high: %d, result: %d\n", low, high, low + (high << 8));
           settings.pixelCount = low + (high << 8);
           settings.endPixel = settings.pixelCount;
-          printf("Before Save: pixelCount: %d, endPixel: %d\n", settings.pixelCount, settings.endPixel);
+          //printf("Before Save: pixelCount: %d, endPixel: %d\n", settings.pixelCount, settings.endPixel);
           saveSettingsToFs(false);
-          printf("after save\n");
           delete FX.fxData;
           delete FX.fxTemp;
           FX.initFxData();
-          printf("end of pixel changing\n");
           //ESP.reset();
           setReset();
         }
 
+        //if playlist settings
         if(hData[4] == 'L') {
           uint8_t plSize = wifiUDP.read();
           playlistPeriod = wifiUDP.read();
@@ -204,7 +195,6 @@ void readUDP() {
             set.fxRnd = (set.fxParams>>3)&1;
             set.fxRndColor = (set.fxParams>>7)&1;
             *playlist = set;
-           // printf("playlist address: %p, fxNum: %d, speed: %f, size: %d, parts: %d\n", playlist, set.fxNumber, set.fxSpeed, set.fxSize, set.fxParts);
             playlist++;
           }
           playlist = playlist_temp;
@@ -215,9 +205,9 @@ void readUDP() {
       }
       processRequest();
     }
-printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
-printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
-printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, reqFxParam: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, request.fxParams, settings.fxSize);
+//printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
+//printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
+//printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, reqFxParam: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, request.fxParams, settings.fxSize);
   }
 }
 
@@ -228,7 +218,6 @@ void setup() {
   strip.Begin();
   //LittleFS.format();
   setRandomSsidName();
-  printf("%s\n", ssid);
   initSettings();////
   FX.initFxData();////
   test2();
@@ -244,10 +233,9 @@ void setup() {
   startUdpServer();
   OTA_Func();
   updateSendTicker.attach(2, update);
-  //printf("0: %d, 0.5: %d, 1.0: %d, 2.0: %d *** 0: %f, 25: %f, 50: %f, 100: %f\n", speedToInt(0), speedToInt(0.5), speedToInt(1), speedToInt(2), speedToDouble(0), speedToDouble(25), speedToDouble(50), speedToDouble(100));
-  printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
-  printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
-  printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
+  //printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
+  //printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
+  //printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
 }
 
 void loop() {
@@ -266,14 +254,13 @@ void setRandomSsidName() {
  char mac[64];
  String macaddr = WiFi.macAddress().substring(11);
  strcpy(mac, macaddr.c_str());
- strcat(ssid, mac);
+ strcat(AP_SSID, mac);
 }
 
 void stopFX() {
   if(fxTicker.active()) fxTicker.detach();
         if(fxFadeTicker.active()) fxFadeTicker.detach();
         FX.clearFxData();
-        //animations.StopAll();
         FX.fxRunning = false;
         FX.needRecalculate = true;
         FX.rndShouldGo = -1;
@@ -284,16 +271,16 @@ void stopFX() {
 
 void processFx() {
   switch(settings.fxNumber) {
-    case 0:
+    case 0: //Stopped FX
       if(FX.fxRunning) {
         stopFX();
         FX.fxRunning = false;
         FX.needRecalculate = true;
         if(FX.previousFxNum != 0) FX.previousFxNum = 0;
-        printf("Stopped FX...\n");
+        //printf("Stopped FX...\n");
       }
       break;
-    case 1:
+    case 1: //Sinus FX
       if(!fxTicker.active()) {
         stopFX();
         fxTicker.attach_ms(1000/FX.fps, sinus);
@@ -307,7 +294,7 @@ void processFx() {
         FX.fxRunning = true;
       }
       break;
-    case 2:
+    case 2: //Cyclon FX
       if(FX.previousFxNum != 2) {
         stopFX();
         setupAnimations();
@@ -320,9 +307,9 @@ void processFx() {
       }
       FX.animations.UpdateAnimations();
       break;
-    case 3:
+    case 3: //Fade FX
       if(FX.previousFxNum != 3) {
-        printf("R: %d, G:%d, B:%d, fxSize: %d, fxParts: %d, fxSpread: %d, fxSpeed: %f\n", settings.fxColor.R, settings.fxColor.G, settings.fxColor.B, settings.fxSize, settings.fxParts, settings.fxSpread, settings.fxSpeed);
+        //printf("R: %d, G:%d, B:%d, fxSize: %d, fxParts: %d, fxSpread: %d, fxSpeed: %f\n", settings.fxColor.R, settings.fxColor.G, settings.fxColor.B, settings.fxSize, settings.fxParts, settings.fxSpread, settings.fxSpeed);
         stopFX();
         setupAnimationsCyclon();
         FX.fxRunning = true;
@@ -334,7 +321,7 @@ void processFx() {
       }
       FX.animations2.UpdateAnimations();
       break;
-    case 4:
+    case 4: //RGB FX
       if(!fxTicker.active()) {
         stopFX();
         fxTicker.attach_ms(1000/FX.fps, sinusRGB);
@@ -368,7 +355,7 @@ void processPlaylist() {
         }
         else {
           copyPlaylistSettings(settings, *playlist_temp);
-          printf("cur item: %p\n", playlist_temp);
+          //printf("cur item: %p\n", playlist_temp);
           playlistLastTime = millis();
           playlist_counter++;
           playlist_temp++;
