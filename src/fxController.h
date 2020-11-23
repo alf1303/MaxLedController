@@ -1,5 +1,12 @@
+#include <NeoPixelBus.h>
+#include <NeoPixelAnimator.h>
+#include <settings.h>
+
 class FxController{
     public:
+    settings_t *sett;
+    NeoPixelAnimator animations{2};////
+    NeoPixelAnimator animations2{2};////
     bool fxRunning;
     bool periodChanged;
     bool speedChanged;
@@ -24,5 +31,9 @@ class FxController{
         prevIndex = -1;
         tick = 0;
         fps = 30;
+    }
+
+    void setSettings(settings_t *set) {
+        sett = set;
     }
 };

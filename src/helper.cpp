@@ -11,9 +11,7 @@ uint8_t fade_frame_dur = 30;
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(200, PIN);
 
-NeoPixelAnimator animations(2);////
-NeoPixelAnimator animations2(2);////
-FxController FX = FxController();////
+FxController FX;
 RgbColor *fxData;////
 double *rgbData;////
 RgbTemp_t *fxTemp;////
@@ -178,11 +176,11 @@ void fadeAll() {
 void fadeAnim(const AnimationParam& param) {
     if(param.state == AnimationState_Completed) {
         fadeAll();
-        if(animations.IsAnimating()) {
-          animations.RestartAnimation(param.index);
+        if(FX.animations.IsAnimating()) {
+          FX.animations.RestartAnimation(param.index);
         }
-        if(animations2.IsAnimating()) {
-          animations2.RestartAnimation(param.index);
+        if(FX.animations2.IsAnimating()) {
+          FX.animations2.RestartAnimation(param.index);
         }
     }
 }
@@ -214,19 +212,19 @@ void moveAnim(const AnimationParam& param) {
 
     if(param.state == AnimationState_Completed) {
       FX.moveDir *= -1;
-      animations.RestartAnimation(param.index);
+      FX.animations.RestartAnimation(param.index);
     }
 
 }
 
 void setupAnimations() {
-     animations.StartAnimation(0, 15, fadeAnim);
-     animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), moveAnim);
+     FX.animations.StartAnimation(0, 15, fadeAnim);
+     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), moveAnim);
 }
 
 void setupAnimationsCyclon() {
-    animations2.StartAnimation(0, 15, fadeAnim);
-    animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), animCyclon);
+    FX.animations2.StartAnimation(0, 15, fadeAnim);
+    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), animCyclon);
 }
 
 void animCyclon(const AnimationParam& param) {
@@ -329,7 +327,7 @@ if(*indexes != FX.prevIndex) {
 }
   if(param.state == AnimationState_Completed) {
       FX.rndShouldGo = -1;
-      animations2.RestartAnimation(param.index);
+      FX.animations2.RestartAnimation(param.index);
     }
 }
 
@@ -363,6 +361,7 @@ void initSettings() {
     printf("Reading values from mode_file\n");
     loadSettingsFromFs();
     printf("Readed settings\n");
+    FX.setSettings(&settings);////
 }
 
 void saveSettingsToFs(boolean first) {

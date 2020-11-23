@@ -84,35 +84,7 @@ extern unsigned long playlistPeriodMs;
 extern unsigned long playlistLastTime;
 extern uint8_t playlist_counter;
 
-//main settings type
-typedef struct {
-    char* name;
-    uint8_t netMode; //0 -0 standalone, 1 - client
-    int pixelCount;
-    char* network;
-    char* password;
-    uint8_t playlistSize;
-    bool playlistMode;
-    uint8_t dimmer;
-    RgbColor color;
-    RgbColor fxColor;
-    uint8_t strobe;
-    uint8_t fxNumber;
-    double fxSpeed;
-    uint8_t fxSize;
-    uint8_t fxParts;
-    uint8_t fxFade;
-    uint8_t fxParams;
-    uint8_t fxSpread;
-    uint8_t fxWidth;
-    uint8_t startPixel;
-    uint8_t endPixel;
-    boolean fxReverse;
-    boolean fxAttack;
-    boolean fxSymm;
-    boolean fxRnd;
-    boolean fxRndColor;
-} settings_t;
+
 
 extern settings_t settings; //main settings
 extern settings_t request; //variable for storing data, received via UDP from controll App

@@ -331,10 +331,10 @@ void processFx() {
         FX.previousFxNum = 2;
       }
       if(FX.speedChanged) {
-        animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
         FX.speedChanged = false;
       }
-      animations.UpdateAnimations();
+      FX.animations.UpdateAnimations();
       break;
     case 3:
       if(FX.previousFxNum != 3) {
@@ -345,10 +345,10 @@ void processFx() {
         FX.previousFxNum = 3;
       }
       if(FX.speedChanged) {
-        animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
         FX.speedChanged = false;
       }
-      animations2.UpdateAnimations();
+      FX.animations2.UpdateAnimations();
       break;
     case 4:
       if(!fxTicker.active()) {
