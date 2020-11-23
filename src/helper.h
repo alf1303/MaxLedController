@@ -58,23 +58,12 @@ typedef struct {
     boolean fxRndColor;
 } ledsettings_t;
 
-struct RgbTemp_t{
-    double R;
-    double G;
-    double B;
-
-    RgbTemp_t(double r, double g, double b):
-        R(r), G(g), B(b) {};
-
-    RgbTemp_t() {};
-};
-
 //NeoPixelBus
 extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
-extern RgbColor *fxData; //array, containing data of current fx
-extern double *rgbData; //for rgb effect
-extern RgbTemp_t *fxTemp; //sinus effect
-extern RgbTemp_t *attackTemp; //sinus effect
+//extern RgbColor *fxData; //array, containing data of current fx
+//extern double *rgbData; //for rgb effect
+//extern RgbTemp_t *fxTemp; //sinus effect
+//extern RgbTemp_t *attackTemp; //sinus effect
 extern ledsettings_t *playlist; //array, containing data for settings to be played
 extern ledsettings_t *playlist_temp; ////
 extern NeoPixelAnimator animations;
@@ -125,23 +114,20 @@ void test2();
 void startUdpServer();
 void setRandomSsidName();
 void processFx();
-void clearFxData();
 double speedToDouble(uint8_t speed);
 uint8_t speedToInt(double speed);
 double widthToDouble(uint8_t parts);
 uint8_t widthToInt(double parts);
-double normToDouble(uint8_t value, uint8_t inMin, uint8_t inMax, double outMin, double outMax);
 
-void initFxData();
+void moveAnim(const AnimationParam& param);
+void fadeAnim(const AnimationParam& param);
+void animCyclon(const AnimationParam& param);
 void sinus();
 void sinusRGB();
+
 void setRandomSeed();
 void setupAnimations();
 void setupAnimationsCyclon();
-void moveAnim(const AnimationParam& param);
-void fadeAnim(const AnimationParam& param);
-void fadeAll();
-void animCyclon(const AnimationParam& param);
 void savePlaylist();
 void loadPlaylist();
 void processPlaylist();

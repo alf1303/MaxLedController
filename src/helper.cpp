@@ -12,10 +12,6 @@ uint8_t fade_frame_dur = 30;
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(200, PIN);
 
 FxController FX;
-RgbColor *fxData;////
-double *rgbData;////
-RgbTemp_t *fxTemp;////
-RgbTemp_t *attackTemp;////
 ledsettings_t *playlist;////
 ledsettings_t *playlist_temp;////
 uint8_t playlistPeriod = 5;
@@ -67,155 +63,207 @@ char option;
 int mask;
 IPAddress sourceIP;
 uint8_t uni = UNI;
-#define PIP PI
-
-void recalculateTemp() {
-  for(int i = 0; i < settings.pixelCount; i++) {
-    double p;
-    if(settings.fxParts == 1) {
-      p = i*(settings.fxSpread*PIP/settings.pixelCount);
-    }
-    else {
-      p = (i%settings.fxParts)*(settings.fxSpread*PIP/(settings.fxParts-1));
-    }
-
-    if(settings.fxSymm) {
-      if(settings.fxReverse) {
-      fxTemp[i] = RgbTemp_t(p, p, p);
-      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
-    }
-    else {
-      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
-      fxTemp[i] = RgbTemp_t(p, p, p);
-
-    }
-    }
-    else {
-      if(settings.fxReverse) {
-      fxTemp[i] = RgbTemp_t(p, p, p);
-    }
-    else {
-      fxTemp[settings.pixelCount - i - 1] = RgbTemp_t(p, p, p);
-    }
-    }
-  }
-  FX.needRecalculate = false;
-  //printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
-}
-
-void recalculateTempRGB() {
-  for(int i = 0; i < settings.pixelCount; i++) {
-    rgbData[settings.pixelCount - i - 1] = (int)(i*(360.0/settings.pixelCount)*normToDouble(settings.fxParts, PARTS_MIN_INT, PARTS_MAX_INT, PARTS_MIN_DOUBLE, PARTS_MAX_DOUBLE))%360;
-    //printf("rgbData: i: %d, %f\n", i, rgbData[i]);
-  }
-  FX.needRecalculate = false;
-  //printf("%f, %f, %f\n", fxTemp[0].R, fxTemp[1].R, fxTemp[2].R);
-}
 
 void sinus() {
-  //printf("sinus\n");
-  double speed = (settings.fxSpeed/4)*((2*PIP)/FX.fps);
-  if(FX.needRecalculate) recalculateTemp();
-  for(int i = 0; i < settings.pixelCount; i++) {
-    fxTemp[i] = RgbTemp_t(fxTemp[i].R+speed, fxTemp[i].G+speed, fxTemp[i].B+speed);
-     RgbTemp_t res(settings.fxColor.R*sin(fxTemp[i].R), settings.fxColor.G*sin(fxTemp[i].G), settings.fxColor.B*sin(fxTemp[i].B));
-    if(settings.fxAttack) { //RRRRRRRRRRR
-      if(fxData[i].R < res.R) {
-      attackTemp[i].R = res.R;
-      res.R = settings.fxColor.R;
-      }
-      else {
-        if(res.R > attackTemp[i].R) {
-          attackTemp[i].R = res.R;
-          res.R = settings.fxColor.R;
+    //printf("sinus\n");
+    double speed = (settings.fxSpeed/4)*((2*PIP)/FX.fps);
+    if(FX.needRecalculate) FX.recalculateTemp();
+    for(int i = 0; i < settings.pixelCount; i++) {
+        FX.fxTemp[i] = RgbTemp_t(FX.fxTemp[i].R+speed, FX.fxTemp[i].G+speed, FX.fxTemp[i].B+speed);
+        RgbTemp_t res(settings.fxColor.R*sin(FX.fxTemp[i].R), settings.fxColor.G*sin(FX.fxTemp[i].G), settings.fxColor.B*sin(FX.fxTemp[i].B));
+        if(settings.fxAttack) { //RRRRRRRRRRR
+        if(FX.fxData[i].R < res.R) {
+        FX.attackTemp[i].R = res.R;
+        res.R = settings.fxColor.R;
         }
-      } //GGGGGGGGGGGG
-      if(fxData[i].G < res.G) {
-      attackTemp[i].G = res.G;
-      res.G = settings.fxColor.G;
-      }
-      else {
-        if(res.G > attackTemp[i].G) {
-          attackTemp[i].G = res.G;
-          res.G = settings.fxColor.G;
+        else {
+            if(res.R > FX.attackTemp[i].R) {
+            FX.attackTemp[i].R = res.R;
+            res.R = settings.fxColor.R;
+            }
+        } //GGGGGGGGGGGG
+        if(FX.fxData[i].G < res.G) {
+        FX.attackTemp[i].G = res.G;
+        res.G = settings.fxColor.G;
         }
-      } //BBBBBBBBBBBBBBBBBb
-      if(fxData[i].B < res.B) {
-      attackTemp[i].B = res.B;
-      res.B = settings.fxColor.B;
-      }
-      else {
-        if(res.B > attackTemp[i].B) {
-          attackTemp[i].B = res.B;
-          res.B = settings.fxColor.B;
+        else {
+            if(res.G > FX.attackTemp[i].G) {
+            FX.attackTemp[i].G = res.G;
+            res.G = settings.fxColor.G;
+            }
+        } //BBBBBBBBBBBBBBBBBb
+        if(FX.fxData[i].B < res.B) {
+        FX.attackTemp[i].B = res.B;
+        res.B = settings.fxColor.B;
         }
-      }
+        else {
+            if(res.B > FX.attackTemp[i].B) {
+            FX.attackTemp[i].B = res.B;
+            res.B = settings.fxColor.B;
+            }
+        }
+        }
+        FX.fxData[i] = RgbColor(res.R > 0 ? res.R : 0, res.G > 0 ? res.G : 0, res.B > 0 ? res.B : 0);
     }
-    fxData[i] = RgbColor(res.R > 0 ? res.R : 0, res.G > 0 ? res.G : 0, res.B > 0 ? res.B : 0);
-  }
-  
-}
+    }
 
 void sinusRGB() {
-  double speed = settings.fxSpeed;
-  if(FX.needRecalculate) recalculateTempRGB();
-  for(int i = 0; i < settings.pixelCount; i++) {
-    rgbData[i] = rgbData[i] + speed;
-    double t = ((int)rgbData[i])%360;
-    RgbColor col = HslColor(t/360.0, 1.0f, 0.5);
-      fxData[i] = col;
-  }
-}
-
-void fadeAll() {
-    for(uint16_t i = 0; i < settings.pixelCount; i++) {
-        fxData[i].Darken(settings.fxWidth);
-    }
-}
-
-void fadeAnim(const AnimationParam& param) {
-    if(param.state == AnimationState_Completed) {
-        fadeAll();
-        if(FX.animations.IsAnimating()) {
-          FX.animations.RestartAnimation(param.index);
-        }
-        if(FX.animations2.IsAnimating()) {
-          FX.animations2.RestartAnimation(param.index);
-        }
+    double speed = settings.fxSpeed;
+    if(FX.needRecalculate) FX.recalculateTempRGB();
+    for(int i = 0; i < settings.pixelCount; i++) {
+        FX.rgbData[i] = FX.rgbData[i] + speed;
+        double t = ((int)FX.rgbData[i])%360;
+        RgbColor col = HslColor(t/360.0, 1.0f, 0.5);
+        FX.fxData[i] = col;
     }
 }
 
 void moveAnim(const AnimationParam& param) {
-  uint16_t nextPixel;
-  float progress = NeoEase::SinusoidalInOut(param.progress);
-    if (FX.moveDir > 0)
-    {
-        nextPixel = progress * (settings.pixelCount-1);
-    }
-    else
-    {
-        nextPixel = (1.0f - progress) * (settings.pixelCount-1);
-    }
-
-   if (FX.lastPixel != nextPixel)
-    {
-        for (uint16_t i = FX.lastPixel + FX.moveDir; i != nextPixel; i += FX.moveDir)
+    uint16_t nextPixel;
+    float progress = NeoEase::SinusoidalInOut(param.progress);
+        if (FX.moveDir > 0)
         {
-          if(i >= settings.pixelCount) break;
-            fxData[i] = settings.fxColor;
+            nextPixel = progress * (settings.pixelCount-1);
+        }
+        else
+        {
+            nextPixel = (1.0f - progress) * (settings.pixelCount-1);
+        }
+
+    if (FX.lastPixel != nextPixel)
+        {
+            for (uint16_t i = FX.lastPixel + FX.moveDir; i != nextPixel; i += FX.moveDir)
+            {
+            if(i >= settings.pixelCount) break;
+                FX.fxData[i] = settings.fxColor;
+            }
+        }
+        //printf("np: %d\n", nextPixel);
+        FX.fxData[nextPixel] = settings.fxColor;
+
+        FX.lastPixel = nextPixel;
+
+        if(param.state == AnimationState_Completed) {
+        FX.moveDir *= -1;
+        FX.animations.RestartAnimation(param.index);
+        }
+}
+
+    void fadeAnim(const AnimationParam& param) {
+       if(param.state == AnimationState_Completed) {
+          FX.fadeAll();
+           if(FX.animations.IsAnimating()) {
+            FX.animations.RestartAnimation(param.index);
+           }
+           if(FX.animations2.IsAnimating()) {
+            FX.animations2.RestartAnimation(param.index);
+           }
         }
     }
-    //printf("np: %d\n", nextPixel);
-    fxData[nextPixel] = settings.fxColor;
 
-    FX.lastPixel = nextPixel;
-
-    if(param.state == AnimationState_Completed) {
-      FX.moveDir *= -1;
-      FX.animations.RestartAnimation(param.index);
+  void animCyclon(const AnimationParam& param) {
+    float progress = NeoEase::Linear(param.progress);
+    //float progress_step = progress/settings.fxParts;
+    uint16_t fxParts_tmp = settings.fxParts == 1 ? settings.pixelCount : settings.fxParts;
+    float progress_step = 1.0f/fxParts_tmp;
+    size_t progresses_size = (int)ceil(1/progress_step) +1;
+    uint16_t indexes[settings.pixelCount];
+    float progresses[102];
+    uint16_t* ind_t = indexes;
+    float* progr_t = progresses;
+    uint16_t j = 0;
+    uint16_t tmpind = 0;
+    RgbColor colo;
+    if(settings.fxRndColor) {
+        colo = HslColor(random(360)/360.0f, 1.0f, 0.5);
     }
+    else {
+        colo = settings.fxColor;
+    }
+    //printf("progr: %f, fxPartsT: %d, progrSize: %d, indexSize: %d, progrStep: %f\n",progress, fxParts_tmp, progresses_size, indexes_size, progress_step);
+    if(settings.fxRnd) {
+        if(FX.rndShouldGo == -1) {
+        FX.rndShouldGo = 0;
+        uint16_t count = settings.fxSpread;
+        while (count > 0) {
+        uint16_t pixel = random(settings.pixelCount);
+        *ind_t = pixel;
+        ind_t++; 
+        tmpind++;
+        count--;
+        }
+        }
 
-}
+    }
+    else{
+        while (j < progresses_size)  {
+        *progr_t = j * progress_step;
+        j++;
+        progr_t++;
+    }
+    *progr_t = 1.0f;
+    uint16_t i = 0;
+    while(i < (progresses_size - 1)) {
+        if((progress >= progresses[i]) && (progress <= progresses[i+1])) {
+        for(int k = 0; k < settings.pixelCount; k++) {
+            if((k%fxParts_tmp) == i) {
+            uint16_t cc = k + fxParts_tmp - (i*2+1);
+            //printf("k: %d, cc: %d\n", k, cc);
+            if(!settings.fxSymm) {
+                *ind_t = settings.fxReverse ? (settings.pixelCount - k - 1) : k;
+                ind_t++;
+                tmpind++;
+            }
+            else {
+                if(cc < settings.pixelCount && cc >= 0) {
+                if(settings.fxReverse) {
+                    if(cc >= k) {
+                        *ind_t = k;
+                        ind_t++;
+                        tmpind++;
+                        *ind_t = cc;
+                        ind_t++;
+                        tmpind++;
+                    }
+                }
+                else {
+                    if(cc <= k) {
+                        *ind_t = k;
+                        ind_t++;
+                        tmpind++;
+                        *ind_t = cc;
+                        ind_t++;
+                        tmpind++;
+                    }
+                }
+            }
+            }
+            }
+        }
+        }
+        i++;
+    }
+    }
+    ind_t = indexes;
+    uint16_t h = 0;
+    //printf("tmpind: %d\n", tmpind);
+    if(*indexes != FX.prevIndex) {
+        while (h < tmpind)
+    {
+        //printf("h: %d, ind: %d\n",h, *ind_t);
+        if(*ind_t < settings.pixelCount && *ind_t >= 0) {
+        FX.fxData[*ind_t] = colo;
+        }
+        ind_t++;
+        h++;
+    }
+    FX.prevIndex = *indexes;
+    }
+    if(param.state == AnimationState_Completed) {
+        FX.rndShouldGo = -1;
+        FX.animations2.RestartAnimation(param.index);
+        }
+    }
 
 void setupAnimations() {
      FX.animations.StartAnimation(0, 15, fadeAnim);
@@ -225,110 +273,6 @@ void setupAnimations() {
 void setupAnimationsCyclon() {
     FX.animations2.StartAnimation(0, 15, fadeAnim);
     FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), animCyclon);
-}
-
-void animCyclon(const AnimationParam& param) {
-  float progress = NeoEase::Linear(param.progress);
-  //float progress_step = progress/settings.fxParts;
-  uint16_t fxParts_tmp = settings.fxParts == 1 ? settings.pixelCount : settings.fxParts;
-   float progress_step = 1.0f/fxParts_tmp;
-  size_t progresses_size = (int)ceil(1/progress_step) +1;
-  uint16_t indexes[settings.pixelCount];
-  float progresses[102];
-  uint16_t* ind_t = indexes;
-  float* progr_t = progresses;
-  uint16_t j = 0;
-  uint16_t tmpind = 0;
-  RgbColor colo;
-  if(settings.fxRndColor) {
-    colo = HslColor(random(360)/360.0f, 1.0f, 0.5);
-  }
-  else {
-    colo = settings.fxColor;
-  }
-  //printf("progr: %f, fxPartsT: %d, progrSize: %d, indexSize: %d, progrStep: %f\n",progress, fxParts_tmp, progresses_size, indexes_size, progress_step);
-  if(settings.fxRnd) {
-    if(FX.rndShouldGo == -1) {
-      FX.rndShouldGo = 0;
-    uint16_t count = settings.fxSpread;
-    while (count > 0) {
-      uint16_t pixel = random(settings.pixelCount);
-      *ind_t = pixel;
-      ind_t++; 
-      tmpind++;
-      count--;
-    }
-    }
-
-  }
-  else{
-    while (j < progresses_size)  {
-    *progr_t = j * progress_step;
-    j++;
-    progr_t++;
-  }
-  *progr_t = 1.0f;
-  uint16_t i = 0;
-  while(i < (progresses_size - 1)) {
-    if((progress >= progresses[i]) && (progress <= progresses[i+1])) {
-      for(int k = 0; k < settings.pixelCount; k++) {
-        if((k%fxParts_tmp) == i) {
-          uint16_t cc = k + fxParts_tmp - (i*2+1);
-          //printf("k: %d, cc: %d\n", k, cc);
-          if(!settings.fxSymm) {
-            *ind_t = settings.fxReverse ? (settings.pixelCount - k - 1) : k;
-            ind_t++;
-            tmpind++;
-          }
-          else {
-            if(cc < settings.pixelCount && cc >= 0) {
-              if(settings.fxReverse) {
-                if(cc >= k) {
-                  *ind_t = k;
-                  ind_t++;
-                  tmpind++;
-                  *ind_t = cc;
-                  ind_t++;
-                  tmpind++;
-                }
-              }
-              else {
-                if(cc <= k) {
-                  *ind_t = k;
-                  ind_t++;
-                  tmpind++;
-                  *ind_t = cc;
-                  ind_t++;
-                  tmpind++;
-                }
-              }
-          }
-          }
-        }
-      }
-    }
-    i++;
-  }
-}
-ind_t = indexes;
-uint16_t h = 0;
-//printf("tmpind: %d\n", tmpind);
-if(*indexes != FX.prevIndex) {
-    while (h < tmpind)
-  {
-    //printf("h: %d, ind: %d\n",h, *ind_t);
-    if(*ind_t < settings.pixelCount && *ind_t >= 0) {
-      fxData[*ind_t] = colo;
-    }
-    ind_t++;
-    h++;
-  }
-  FX.prevIndex = *indexes;
-}
-  if(param.state == AnimationState_Completed) {
-      FX.rndShouldGo = -1;
-      FX.animations2.RestartAnimation(param.index);
-    }
 }
 
 void setRandomSeed() {
@@ -877,9 +821,9 @@ void showStrip() {
 
 void setPixelColor(int i, RgbColor A) {
  // RgbColor A(settings.color.R, settings.color.G, settings.color.B);
-  RgbColor B(fxData[i].R, fxData[i].G, fxData[i].B);
+  RgbColor B(FX.fxData[i].R, FX.fxData[i].G, FX.fxData[i].B);
   //RgbColor ccolor(RgbColor((B.B == 0 ? A.R : 0) + B.R, (B.B == 0 ? A.G : 0) + B.G, (B.B == 0 ? A.B : 0) + B.B));
-  double fxDim = normToDouble(settings.fxSize, 0, 100, 0.0, 1.0);
+  double fxDim = FX.normToDouble(settings.fxSize, 0, 100, 0.0, 1.0);
     RgbColor ccolor(RgbColor(A.R + fxDim*B.R, A.G + fxDim*B.G, A.B + fxDim*B.B));
   //printf("r: %d, g: %d, b: %d\n", ccolor.R, ccolor.G, ccolor.B);
   strip.SetPixelColor(i, ccolor);
@@ -969,20 +913,6 @@ double widthToDouble(uint8_t width) {
   return result;
 }
 
-double normToDouble(uint8_t val, uint8_t inMin, uint8_t inMax, double outMin, double outMax) {
-  double result;
-  double scale = (outMax - outMin)/(inMax - inMin);
-   if((outMin == 0 && inMin == 0) || (outMin != 0 && inMin != 0)) {
-    result = val*scale;
-  }
-  else if(inMin == 0) {
-    result = val*scale + outMin;
-  }
-  else if(outMin == 0) {
-    result = val*scale + outMax;
-  }
-  return result;
-}
 
 
 //OTA - Flashing over Air

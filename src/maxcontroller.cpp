@@ -164,9 +164,9 @@ void readUDP() {
           printf("Before Save: pixelCount: %d, endPixel: %d\n", settings.pixelCount, settings.endPixel);
           saveSettingsToFs(false);
           printf("after save\n");
-          delete fxData;
-          delete fxTemp;
-          initFxData();
+          delete FX.fxData;
+          delete FX.fxTemp;
+          FX.initFxData();
           printf("end of pixel changing\n");
           //ESP.reset();
           setReset();
@@ -230,7 +230,7 @@ void setup() {
   setRandomSsidName();
   printf("%s\n", ssid);
   initSettings();////
-  initFxData();////
+  FX.initFxData();////
   test2();
   if(settings.netMode == 0) {
     connectWiFi_AP();
@@ -262,22 +262,6 @@ void loop() {
   ArduinoOTA.handle();
 }
 
-void initFxData() {
-  fxData = new RgbColor[settings.pixelCount]();
-  fxTemp = new RgbTemp_t[settings.pixelCount];
-  rgbData = new double[settings.pixelCount];
-  attackTemp = new RgbTemp_t[settings.pixelCount];
-  clearFxData();
-}
-
-void clearFxData() {
-  for(int i = 0; i < settings.pixelCount; i++) {
-    fxData[i] = black;
-    fxTemp[i] = RgbTemp_t(0, 0, 0);
-    rgbData[i] = 0;
-  }
-}
-
 void setRandomSsidName() {
  char mac[64];
  String macaddr = WiFi.macAddress().substring(11);
@@ -288,7 +272,7 @@ void setRandomSsidName() {
 void stopFX() {
   if(fxTicker.active()) fxTicker.detach();
         if(fxFadeTicker.active()) fxFadeTicker.detach();
-        clearFxData();
+        FX.clearFxData();
         //animations.StopAll();
         FX.fxRunning = false;
         FX.needRecalculate = true;

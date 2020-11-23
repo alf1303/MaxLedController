@@ -12,6 +12,8 @@
 #define PARTS_MIN_DOUBLE 0.1
 #define PARTS_MAX_DOUBLE 5
 
+#define PIP PI
+
 //main settings type
 typedef struct {
     char* name;
@@ -41,3 +43,14 @@ typedef struct {
     boolean fxRnd;
     boolean fxRndColor;
 } settings_t;
+
+struct RgbTemp_t{
+    double R;
+    double G;
+    double B;
+
+    RgbTemp_t(double r, double g, double b):
+        R(r), G(g), B(b) {};
+
+    RgbTemp_t() {};
+};
