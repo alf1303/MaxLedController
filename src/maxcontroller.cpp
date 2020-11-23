@@ -113,6 +113,7 @@ void readUDP() {
           }
           request.fxFade = hData2[13];
           request.fxParams = hData2[14];
+          settings.fxParams = request.fxParams;
           request.fxSpread = hData2[15];
           request.fxWidth = hData2[16];
           printf("** udp read, recSize: %d, width: %d\n", request.fxSize, hData2[16]);
@@ -171,12 +172,52 @@ void readUDP() {
           setReset();
         }
 
+        if(hData[4] == 'L') {
+          uint8_t plSize = wifiUDP.read();
+          playlistPeriod = wifiUDP.read();
+          //delete playlist;
+          delay(10);
+          playlist = new ledsettings_t[plSize];
+          playlist_temp = playlist;
+          //printf("plSize: %d, plPeriod: %d\n", plSize, playlistPeriod);
+          for(int i = 0; i < plSize; i++) {
+            ledsettings_t set;
+            set.dimmer = wifiUDP.read();
+            set.color.R = wifiUDP.read();
+            set.color.G = wifiUDP.read();
+            set.color.B = wifiUDP.read();
+            set.fxColor.R = wifiUDP.read();
+            set.fxColor.G = wifiUDP.read();
+            set.fxColor.B = wifiUDP.read();
+            set.strobe = wifiUDP.read();
+            set.fxNumber = wifiUDP.read();
+            set.fxSpeed = speedToDouble(wifiUDP.read());
+            set.fxSize = wifiUDP.read();
+            set.fxParts = wifiUDP.read();
+            set.fxFade = wifiUDP.read();
+            set.fxParams = wifiUDP.read();
+            set.fxSpread = wifiUDP.read();
+            set.fxWidth = wifiUDP.read();
+            set.fxReverse = (set.fxParams)&1;
+            set.fxAttack = (set.fxParams>>1)&1;
+            set.fxSymm = (set.fxParams>>2)&1;
+            set.fxRnd = (set.fxParams>>3)&1;
+            set.fxRndColor = (set.fxParams>>7)&1;
+            *playlist = set;
+           // printf("playlist address: %p, fxNum: %d, speed: %f, size: %d, parts: %d\n", playlist, set.fxNumber, set.fxSpeed, set.fxSize, set.fxParts);
+            playlist++;
+          }
+          playlist = playlist_temp;
+          settings.playlistSize = plSize;
+          savePlaylist();
+        }
+
       }
       processRequest();
     }
 printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
 printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
-printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, settings.fxSize);
+printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, reqFxParam: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, request.fxParams, settings.fxSize);
   }
 }
 
@@ -206,13 +247,14 @@ void setup() {
   //printf("0: %d, 0.5: %d, 1.0: %d, 2.0: %d *** 0: %f, 25: %f, 50: %f, 100: %f\n", speedToInt(0), speedToInt(0.5), speedToInt(1), speedToInt(2), speedToDouble(0), speedToDouble(25), speedToDouble(50), speedToDouble(100));
   printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
   printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
-  printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, fxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
+  printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
 }
 
 void loop() {
   readUDP();
   processFx();////
   outToStrip();////
+  processPlaylist(); ////
   if(toAnswer) {
     formAnswerInfo(PORT_OUT_UPD);
     toAnswer = false;
@@ -296,6 +338,7 @@ void processFx() {
       break;
     case 3:
       if(FX.previousFxNum != 3) {
+        printf("R: %d, G:%d, B:%d, fxSize: %d, fxParts: %d, fxSpread: %d, fxSpeed: %f\n", settings.fxColor.R, settings.fxColor.G, settings.fxColor.B, settings.fxSize, settings.fxParts, settings.fxSpread, settings.fxSpeed);
         stopFX();
         setupAnimationsCyclon();
         FX.fxRunning = true;
@@ -323,7 +366,30 @@ void processFx() {
       break;
     
     default:
-      printf("***Wrong fxNumber\n");
+      //printf("***Wrong fxNumber\n");
       break;
   }
 }
+
+void processPlaylist() {
+  if(settings.playlistMode && settings.playlistSize > 0) {
+    if((millis() - playlistLastTime) > playlistPeriodMs) {
+      if(playlist_counter >= settings.playlistSize){
+          while(playlist_counter > 0) {
+            playlist_temp--;
+            playlist_counter--;
+          }
+          //printf("playlistCounter: %d\n", playlist_counter);
+         // printf("%p, %p\n", playlist_temp, playlist);
+        }
+        else {
+          copyPlaylistSettings(settings, *playlist_temp);
+          printf("cur item: %p\n", playlist_temp);
+          playlistLastTime = millis();
+          playlist_counter++;
+          playlist_temp++;
+        }
+    }
+  }
+}
+

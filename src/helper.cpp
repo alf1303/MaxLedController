@@ -18,7 +18,12 @@ RgbColor *fxData;////
 double *rgbData;////
 RgbTemp_t *fxTemp;////
 RgbTemp_t *attackTemp;////
-settings_t *playlist;////
+ledsettings_t *playlist;////
+ledsettings_t *playlist_temp;////
+uint8_t playlistPeriod = 5;
+unsigned long playlistPeriodMs = 5000;
+unsigned long playlistLastTime = 0;
+uint8_t playlist_counter = 0;
 
 settings_t settings = {
     "esp001\0",
@@ -27,6 +32,7 @@ settings_t settings = {
     "SolidNet2\0", //ssid for client mode
     "kmdsdobyf3kmdsdobyf3\0", //password for client mode
     playlistSize: 0,
+    playlistMode: false,
     dimmer: 255,
     color: black,
     fxColor: blue,
@@ -350,6 +356,10 @@ void initSettings() {
     printf("*** ssid or pass file not exists, creating...\n");
     saveNetworkDataToFs(true);
   }
+  if(!LittleFS.exists(PLAYLIST_FILE)) {
+    printf("*** playlist file not exists, creating...\n");
+    savePlaylist();
+  }
     printf("Reading values from mode_file\n");
     loadSettingsFromFs();
     printf("Readed settings\n");
@@ -387,6 +397,7 @@ void saveSettingsToFs(boolean first) {
     f.write(settings.fxParts); //15
     f.write(settings.fxFade); //16
     f.write(settings.fxParams); //17
+    printf("***********writing, params: %d\n", settings.fxParams);
     f.write(settings.fxSpread); //18
     f.write(settings.fxWidth); //19
     f.write(settings.startPixel); //20
@@ -483,6 +494,7 @@ void loadSettingsFromFs() {
   settings.fxParts = temp[15];
   settings.fxFade = temp[16];
   settings.fxParams = temp[17];
+  printf("********************** readed: %d\n", temp[17]);
   settings.fxSpread = temp[18];
   settings.fxWidth = temp[19];
   settings.fxReverse = settings.fxParams&1;
@@ -490,8 +502,10 @@ void loadSettingsFromFs() {
   settings.fxSymm = (settings.fxParams>>2)&1;
   settings.fxRnd = (settings.fxParams>>3)&1;
   settings.fxRndColor = (settings.fxParams>>7)&1;
+  settings.playlistMode = (settings.fxParams>>6)&1;
   settings.startPixel = temp[20] + (temp[21]<<8);
   settings.endPixel = temp[22] + (temp[23]<<8);
+  loadPlaylist();
 }
 
 void processGetCommand() {
@@ -588,6 +602,108 @@ void processSetCommand() {
   }
 }
 
+void savePlaylist() {
+  printf("save playlist start\n");
+  playlistPeriodMs = playlistPeriod*60*1000;
+  ledsettings_t *plset = playlist;
+  size_t plSize = settings.playlistSize;
+  File f = LittleFS.open(PLAYLIST_FILE, "w");
+  playlist_counter = 0;
+  if(!f) {
+    printf("**** fail to open playlistFile for writing\n");
+  }
+  else {
+    f.write(plSize);
+    f.write(playlistPeriod);
+    for(int i = 0; i < settings.playlistSize; i++) {
+      ledsettings_t set = *plset;
+      f.write(set.dimmer);
+      f.write(set.color.R);
+      f.write(set.color.G);
+      f.write(set.color.B);
+      f.write(set.fxColor.R);
+      f.write(set.fxColor.G);
+      f.write(set.fxColor.B);
+      f.write(set.strobe);
+      f.write(set.fxNumber);
+      f.write(speedToInt(set.fxSpeed));
+      f.write(set.fxSize);
+      f.write(set.fxParts);
+      f.write(set.fxFade);
+      f.write(set.fxParams);
+      f.write(set.fxSpread);
+      f.write(set.fxWidth);
+      plset++;
+    }
+    delay(10);
+    f.close();
+    printf("**** playlist saved\n");
+  }
+}
+
+void loadPlaylist() {
+  printf("loading playlist: size: %d\n", settings.playlistSize);
+  File f = LittleFS.open(PLAYLIST_FILE, "r");
+  printf("playlist file size: %d\n", f.size());
+  if(!f) {
+    printf("**** Error playlist file, while loading\n");
+  }
+  else {
+    settings.playlistSize = f.read();
+    playlist = new ledsettings_t[settings.playlistSize];
+    playlist_temp = playlist;
+    ledsettings_t *pset = playlist;
+    playlistPeriod = f.read();
+    playlistPeriodMs = playlistPeriod*60*1000;
+    for(int i = 0; i < settings.playlistSize; i++) {
+      ledsettings_t set;
+      byte temp[16];
+      f.read(temp, 16);
+      set.dimmer = temp[0];
+      set.color = RgbColor(temp[1], temp[2], temp[3]);
+      set.fxColor = RgbColor(temp[4], temp[5], temp[6]);
+      set.strobe = temp[7];
+      set.fxNumber = temp[8];
+      set.fxSpeed = speedToDouble(temp[9]);
+      set.fxSize = temp[10];
+      set.fxParts = temp[11];
+      set.fxFade = temp[12];
+      set.fxParams = temp[13];
+      set.fxSpread = temp[14];
+      set.fxWidth = temp[15];
+      set.fxReverse = (set.fxParams)&1;
+      set.fxAttack = (set.fxParams>>1)&1;
+      set.fxSymm = (set.fxParams>>2)&1;
+      set.fxRnd = (set.fxParams>>3)&1;
+      set.fxRndColor = (set.fxParams>>7)&1;
+      *pset = set;
+      pset++;
+    }
+    f.close();
+    //printf("**** loaded playlist items\n");
+  }
+}
+
+void copyPlaylistSettings(settings_t &set, ledsettings_t &pset) {
+  set.dimmer = pset.dimmer;
+  set.color = pset.color;
+  set.fxColor = pset.fxColor;
+  set.strobe = pset.strobe;
+  set.fxNumber = pset.fxNumber;
+  set.fxSpeed = pset.fxSpeed;
+  set.fxSize = pset.fxSize;
+  set.fxParts = pset.fxParts;
+  set.fxFade = pset.fxFade;
+  set.fxParams = pset.fxParams;
+  set.fxSpread = pset.fxSpread;
+  set.fxWidth = pset.fxWidth;
+  set.fxReverse = pset.fxReverse;
+  set.fxAttack = pset.fxAttack;
+  set.fxSymm = pset.fxSymm;
+  set.fxRnd = pset.fxRnd;
+  set.fxRndColor = pset.fxRndColor;
+}
+
 void setMainSettings() {
   printf("Setting remote settings\n");
   printf("mask: %d\n", mask);
@@ -667,6 +783,10 @@ void setMainSettings() {
     }
     settings.fxRnd = (request.fxParams>>3)&1;
     settings.fxRndColor = (request.fxParams>>7)&1;
+    break;
+  case 131: 
+    settings.fxParams = request.fxParams;
+    settings.playlistMode = (request.fxParams>>6)&1;
     break;
   case 255:
     saveSettingsToFs(false);
@@ -864,6 +984,7 @@ double normToDouble(uint8_t val, uint8_t inMin, uint8_t inMax, double outMin, do
   }
   return result;
 }
+
 
 //OTA - Flashing over Air
 void OTA_Func() {

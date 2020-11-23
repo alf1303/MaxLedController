@@ -14,7 +14,7 @@
 #define PORT_IN 6454
 #define PORT_OUT 6455
 #define PORT_OUT_UPD 6457
-#define VERSION "v_0.1.0"
+#define VERSION "v_0.1.1"
 #define UNI 10
 #define MAIN_FILE "/mainfile"
 #define NAME_FILE "/namefile"
@@ -37,14 +37,26 @@ extern int mask;
 extern IPAddress sourceIP;
 extern uint8_t uni;
 
-
-//NeoPixelBus
-extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
-extern RgbColor *fxData; //array, containing data of current fx
-extern double *rgbData; //for rgb effect
-extern RgbTemp_t *fxTemp; //sinus effect
-extern RgbTemp_t *attackTemp; //sinus effect
-extern settings_t *playlist;
+//playlist item setting type
+typedef struct {
+    uint8_t dimmer;
+    RgbColor color;
+    RgbColor fxColor;
+    uint8_t strobe;
+    uint8_t fxNumber;
+    double fxSpeed;
+    uint8_t fxSize;
+    uint8_t fxParts;
+    uint8_t fxFade;
+    uint8_t fxParams;
+    uint8_t fxSpread;
+    uint8_t fxWidth;
+    boolean fxReverse;
+    boolean fxAttack;
+    boolean fxSymm;
+    boolean fxRnd;
+    boolean fxRndColor;
+} ledsettings_t;
 
 struct RgbTemp_t{
     double R;
@@ -57,6 +69,21 @@ struct RgbTemp_t{
     RgbTemp_t() {};
 };
 
+//NeoPixelBus
+extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
+extern RgbColor *fxData; //array, containing data of current fx
+extern double *rgbData; //for rgb effect
+extern RgbTemp_t *fxTemp; //sinus effect
+extern RgbTemp_t *attackTemp; //sinus effect
+extern ledsettings_t *playlist; //array, containing data for settings to be played
+extern ledsettings_t *playlist_temp; ////
+extern NeoPixelAnimator animations;
+extern NeoPixelAnimator animations2;
+extern uint8_t playlistPeriod;
+extern unsigned long playlistPeriodMs; 
+extern unsigned long playlistLastTime;
+extern uint8_t playlist_counter;
+
 //main settings type
 typedef struct {
     char* name;
@@ -65,6 +92,7 @@ typedef struct {
     char* network;
     char* password;
     uint8_t playlistSize;
+    bool playlistMode;
     uint8_t dimmer;
     RgbColor color;
     RgbColor fxColor;
@@ -85,29 +113,6 @@ typedef struct {
     boolean fxRnd;
     boolean fxRndColor;
 } settings_t;
-
-//playlist item setting type
-typedef struct {
-    uint8_t dimmer;
-    RgbColor color;
-    RgbColor fxColor;
-    uint8_t strobe;
-    uint8_t fxNumber;
-    uint8_t fxSpeed;
-    uint8_t fxSize;
-    uint8_t fxParts;
-    uint8_t fxFade;
-    uint8_t fxParams;
-    uint8_t fxSpread;
-    uint8_t fxWidth;
-    boolean fxReverse;
-    boolean fxAttack;
-    boolean fxSymm;
-    boolean fxRnd;
-    boolean fxRndColor;
-} ledsettings_t;
-
-extern ledsettings_t *playlist; //array, containing data for settings to be played
 
 extern settings_t settings; //main settings
 extern settings_t request; //variable for storing data, received via UDP from controll App
@@ -165,5 +170,7 @@ void moveAnim(const AnimationParam& param);
 void fadeAnim(const AnimationParam& param);
 void fadeAll();
 void animCyclon(const AnimationParam& param);
-extern NeoPixelAnimator animations;
-extern NeoPixelAnimator animations2;
+void savePlaylist();
+void loadPlaylist();
+void processPlaylist();
+void copyPlaylistSettings(settings_t &set, ledsettings_t &plset);
