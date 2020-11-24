@@ -213,7 +213,7 @@ void moveAnim(const AnimationParam& param) {
     }
 
 void setupAnimations() {
-     FX.animations.StartAnimation(0, 15, fadeAnim);
+     FX.animations.StartAnimation(0, 7, fadeAnim);
      FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), moveAnim);
 }
 

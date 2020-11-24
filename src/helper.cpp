@@ -10,6 +10,7 @@ int fade_ms = 600;
 uint8_t fade_frame_dur = 30;
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PIXELCOUNT, PIN);
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
 
 settings_t settings = {
     (char*)"esp001\0",

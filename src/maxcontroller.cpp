@@ -215,11 +215,12 @@ void setup() {
   Serial.begin(115200);
   delay(10);
   LittleFS.begin();
-  strip.Begin();
+  //strip.Begin();
   //LittleFS.format();
   setRandomSsidName();
   initSettings();////
-  FX.initFxData();////
+  FX.initFxData();///
+  strip.Begin();
   test2();
   if(settings.netMode == 0) {
     connectWiFi_AP();
@@ -234,7 +235,7 @@ void setup() {
   OTA_Func();
   updateSendTicker.attach(2, update);
   //printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
-  //printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
+  printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
   //printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
 }
 

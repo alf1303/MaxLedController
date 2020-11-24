@@ -2,7 +2,7 @@
 #define SPEED_MIN_INT 0
 #define SPEED_MAX_INT 100
 #define SPEED_MIN_DOUBLE 0.0
-#define SPEED_MAX_DOUBLE 5.0
+#define SPEED_MAX_DOUBLE 10.0
 #define WIDTH_MIN_INT 1
 #define WIDTH_MAX_INT 100
 #define WIDTH_MIN_DOUBLE 0.8
@@ -18,7 +18,7 @@
 typedef struct {
     char* name;
     uint8_t netMode; //0 -0 standalone, 1 - client
-    int pixelCount;
+    uint16_t pixelCount;
     char* network;
     char* password;
     uint8_t playlistSize;
@@ -35,8 +35,8 @@ typedef struct {
     uint8_t fxParams;
     uint8_t fxSpread;
     uint8_t fxWidth;
-    uint8_t startPixel;
-    uint8_t endPixel;
+    uint16_t startPixel;
+    uint16_t endPixel;
     boolean fxReverse;
     boolean fxAttack;
     boolean fxSymm;
