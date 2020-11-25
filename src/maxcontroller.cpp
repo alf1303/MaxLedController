@@ -1,6 +1,8 @@
 #include "helper.h"
 
 Ticker updateSendTicker; //for sending updated status to Application
+char* ssid = AP_SSID;
+char* pass = AP_PASSWORD;
 
 void update() {//for sending updated status to Application
   formAnswerInfo(PORT_OUT_UPD);
@@ -17,7 +19,7 @@ WiFiUDP wifiUDP;
 void connectWiFi_AP() {
   WiFi.enableAP(1);
   WiFi.softAPConfig(apAddress, apGateway, apSubnet);
-  WiFi.softAP(AP_SSID, AP_PASSWORD);
+  WiFi.softAP(ssid, pass);
   delay(15);
   printf("Creating Access point...\n");
 }
@@ -165,7 +167,10 @@ void readUDP() {
         //if playlist settings
         if(hData[4] == 'L') {
           uint8_t plSize = wifiUDP.read();
-          playlistPeriod = wifiUDP.read();
+          uint8_t low = wifiUDP.read();
+          uint8_t high = wifiUDP.read();
+          printf("low: %d, high: %d, all: %d\n", low, high, (low + (high<<8)));
+          playlistPeriod = low + (high<<8);
           //delete playlist;
           delay(10);
           playlist = new ledsettings_t[plSize];
@@ -218,10 +223,15 @@ void setup() {
   //strip.Begin();
   //LittleFS.format();
   setRandomSsidName();
+    printf("----------------------------- -1\n");
   initSettings();////
+    printf("----------------------------- 0\n");
   FX.initFxData();///
+  printf("----------------------------- 1\n");
   strip.Begin();
+  printf("----------------------------- 2\n");
   test2();
+  printf("----------------------------- 3\n");
   if(settings.netMode == 0) {
     connectWiFi_AP();
   }
@@ -233,10 +243,13 @@ void setup() {
   }
   startUdpServer();
   OTA_Func();
+  printf("----------------------------- 4\n");
   updateSendTicker.attach(2, update);
+  printf("----------------------------- 5\n");
   //printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
   printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
   //printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
+  printf("plPeriodd: %d\n", playlistPeriod);
 }
 
 void loop() {
@@ -255,7 +268,7 @@ void setRandomSsidName() {
  char mac[64];
  String macaddr = WiFi.macAddress().substring(11);
  strcpy(mac, macaddr.c_str());
- strcat(AP_SSID, mac);
+ strcat(ssid, mac);
 }
 
 void stopFX() {
@@ -343,6 +356,11 @@ void processFx() {
   }
 }
 
+void resetPlaylist() {
+      playlist_counter = 0;
+      playlist_temp = playlist;
+}
+
 void processPlaylist() {
   if(settings.playlistMode && settings.playlistSize > 0) {
     if((millis() - playlistLastTime) > playlistPeriodMs) {
@@ -351,7 +369,7 @@ void processPlaylist() {
             playlist_temp--;
             playlist_counter--;
           }
-          //printf("playlistCounter: %d\n", playlist_counter);
+          printf("playlistCounter: %d\n", playlist_counter);
          // printf("%p, %p\n", playlist_temp, playlist);
         }
         else {

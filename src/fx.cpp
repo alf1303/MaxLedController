@@ -6,7 +6,7 @@ Ticker fxFadeTicker;
 FxController FX;
 ledsettings_t *playlist;
 ledsettings_t *playlist_temp;
-uint8_t playlistPeriod = 5;
+uint16_t playlistPeriod = 5;
 unsigned long playlistPeriodMs = 5000;
 unsigned long playlistLastTime = 0;
 uint8_t playlist_counter = 0;
@@ -214,12 +214,12 @@ void moveAnim(const AnimationParam& param) {
 
 void setupAnimations() {
      FX.animations.StartAnimation(0, 7, fadeAnim);
-     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), moveAnim);
+     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+15), moveAnim);
 }
 
 void setupAnimationsCyclon() {
     FX.animations2.StartAnimation(0, 15, fadeAnim);
-    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000+5), animCyclon);
+    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+15), animCyclon);
 }
 
 void setRandomSeed() {
@@ -234,7 +234,7 @@ void setRandomSeed() {
 
 void savePlaylist() {
   printf("save playlist start\n");
-  playlistPeriodMs = playlistPeriod*60*1000;
+  playlistPeriodMs = playlistPeriod*1000;
   ledsettings_t *plset = playlist;
   size_t plSize = settings.playlistSize;
   File f = LittleFS.open(PLAYLIST_FILE, "w");
@@ -245,6 +245,7 @@ void savePlaylist() {
   else {
     f.write(plSize);
     f.write(playlistPeriod);
+    f.write(playlistPeriod>>8);
     for(int i = 0; i < settings.playlistSize; i++) {
       ledsettings_t set = *plset;
       f.write(set.dimmer);
@@ -283,8 +284,8 @@ void loadPlaylist() {
     playlist = new ledsettings_t[settings.playlistSize];
     playlist_temp = playlist;
     ledsettings_t *pset = playlist;
-    playlistPeriod = f.read();
-    playlistPeriodMs = playlistPeriod*60*1000;
+    playlistPeriod = f.read() + (f.read()<<8);
+    playlistPeriodMs = playlistPeriod*1000;
     for(int i = 0; i < settings.playlistSize; i++) {
       ledsettings_t set;
       byte temp[16];

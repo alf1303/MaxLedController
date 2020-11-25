@@ -44,7 +44,7 @@ extern ledsettings_t *playlist; //array, containing data for settings to be play
 extern ledsettings_t *playlist_temp; //temp array
 extern NeoPixelAnimator animations; //cyclon effect
 extern NeoPixelAnimator animations2; //fade effect
-extern uint8_t playlistPeriod;
+extern uint16_t playlistPeriod;
 extern unsigned long playlistPeriodMs; 
 extern unsigned long playlistLastTime; //for changing playlist items while playing
 extern uint8_t playlist_counter; //for changing playlist items while playing
@@ -103,6 +103,7 @@ void animCyclon(const AnimationParam& param);
 void sinus();
 void sinusRGB();
 
+void resetPlaylist();
 void savePlaylist();
 void loadPlaylist();
 void processPlaylist();

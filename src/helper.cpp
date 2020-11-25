@@ -15,7 +15,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PIXELCOUNT, PIN);
 settings_t settings = {
     (char*)"esp001\0",
     netMode: 1,
-    pixelCount: PIXELCOUNT,
+    pixelCount: 50,
     (char*)CLIENT_SSID, //ssid for client mode
     (char*)CLIENT_PASSWORD, //password for client mode
     playlistSize: 0,
@@ -33,7 +33,7 @@ settings_t settings = {
     fxSpread: 1,
     fxWidth: 1,
     startPixel: 0,
-    endPixel: PIXELCOUNT-1,
+    endPixel: 49,
     fxReverse: false,
     fxAttack: false,
 };
@@ -118,6 +118,8 @@ void saveSettingsToFs(boolean first) {
     f.write(settings.startPixel>>8); //21
     f.write(settings.endPixel); //22
     f.write(settings.endPixel>>8); //23
+    f.write(playlistPeriod); //24
+    f.write(playlistPeriod>>8); //25
     delay(50);
     f.close();
   }
@@ -163,8 +165,8 @@ void saveNetworkDataToFs(boolean first) {
 void loadSettingsFromFs() {
 
   File f = LittleFS.open(MAIN_FILE, "r");
-  uint8_t temp[24];
-  f.read(temp, 24);
+  uint8_t temp[26];
+  f.read(temp, 26);
   f.close();
 
   File namefile = LittleFS.open(NAME_FILE, "r");
@@ -219,6 +221,7 @@ void loadSettingsFromFs() {
   settings.playlistMode = (settings.fxParams>>6)&1;
   settings.startPixel = temp[20] + (temp[21]<<8);
   settings.endPixel = temp[22] + (temp[23]<<8);
+  playlistPeriod = temp[24] + (temp[25]<<8);
   loadPlaylist();
 }
 
@@ -399,6 +402,9 @@ void setMainSettings() {
   case 131: 
     settings.fxParams = request.fxParams;
     settings.playlistMode = (request.fxParams>>6)&1;
+    if(!settings.playlistMode) {
+      resetPlaylist();
+    }
     break;
   case 255:
     saveSettingsToFs(false);
