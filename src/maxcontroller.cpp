@@ -79,11 +79,11 @@ boolean connectWiFi() {
 //Reading values, arrived by UDP from Application
 void readUDP() {
   if(wifiUDP.parsePacket()) {
-    printf("udp in\n");
+    printf("***** udp in\n");
     wifiUDP.read(hData, 5);
     command = hData[3];
     option = hData[4];
-    //printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
+    printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
     if(hData[0] == 'C' && hData[1] == 'P') {
       sourceIP = wifiUDP.remoteIP();
       uni = hData[2];
