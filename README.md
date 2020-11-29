@@ -34,5 +34,6 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   - 500 leds is the maximum available count at current version
   - connecting via router/access point is more stable than direct connection to Esp8266
   - closing and reopening application and power reset of Esp8266 can help when something is going wrong)
+  - application screenshot: https://github.com/alf130386/MaxLedController/blob/main/img/appScreenShot.jpg
   
   
