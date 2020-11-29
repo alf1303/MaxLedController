@@ -15,13 +15,15 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   - password: 11223344
   
   Use GPIO3 (RX) pin for connecting leds.
+  
   Android App for controlling: <<<<<PUT LINK TO PLAYMARKET HERE >>>>>>
   
   1) Get project
      - download project, import it to VSCode with installed PlatformiO plugin, connect your Esp8266 with usb, flash
-     - download allready compiled binary file and upload it to your Esp8266 with help of:
+     - download allready compiled binary file(firmware.bin in the root directory of project) and upload it to your Esp8266 with help of:
        - esptool.py (https://github.com/espressif/esptool). Some info: https://nodemcu.readthedocs.io/en/latest/flash/
-        my example command for Nodemcu: esptool.py --port COM6 write_flash -fm qio 0x00000 c:/firmware.bin (change COM6 to your port, with connected NodeMcu)
+       
+         my example command for Nodemcu: esptool.py --port COM6 write_flash -fm qio 0x00000 c:/firmware.bin (change COM6 to your port, with connected NodeMcu)
      
      During reboot first led of strip should blink three times in blue color. 
   2) Get Android app from PlayMarket: LINK
