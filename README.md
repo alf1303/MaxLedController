@@ -29,3 +29,10 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   2) Get Android app from PlayMarket: LINK
   3) Connect to network with name, starting with "MaxLedNet" with password: "11223344"
   4) Start Application, press SCAN button. In bottom part of screen should be a list of detected Esp8266s with uploaded current project.
+  
+  NOTES:
+  - 500 leds is the maximum available count at current version
+  - connecting via router/access point is more stable than direct connection to Esp8266
+  - closing and reopening application and power reset of Esp8266 can help when something is going wrong)
+  
+  
