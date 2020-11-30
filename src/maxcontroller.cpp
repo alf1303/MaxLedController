@@ -281,6 +281,7 @@ void stopFX() {
         FX.prevIndex = -1;
         FX.lastPixel = 0;
         delay(40);
+        //printf("StopFx\n");
 }
 
 void processFx() {
@@ -316,7 +317,7 @@ void processFx() {
         FX.previousFxNum = 2;
       }
       if(FX.speedChanged) {
-        FX.animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000 + 15));
         FX.speedChanged = false;
       }
       FX.animations.UpdateAnimations();
@@ -330,7 +331,7 @@ void processFx() {
         FX.previousFxNum = 3;
       }
       if(FX.speedChanged) {
-        FX.animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*1000 + 5));
+        FX.animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000 + 15));
         FX.speedChanged = false;
       }
       FX.animations2.UpdateAnimations();

@@ -115,7 +115,8 @@ void moveAnim(const AnimationParam& param) {
     float progress_step = 1.0f/fxParts_tmp;
     size_t progresses_size = (int)ceil(1/progress_step) +1;
     uint16_t indexes[settings.pixelCount];
-    float progresses[102];
+    
+    float progresses[MAXPIXELCOUNT];
     uint16_t* ind_t = indexes;
     float* progr_t = progresses;
     uint16_t j = 0;
@@ -153,6 +154,7 @@ void moveAnim(const AnimationParam& param) {
     while(i < (progresses_size - 1)) {
         if((progress >= progresses[i]) && (progress <= progresses[i+1])) {
         for(int k = 0; k < settings.pixelCount; k++) {
+            //printf("k: %d\n", k);
             if((k%fxParts_tmp) == i) {
             uint16_t cc = k + fxParts_tmp - (i*2+1);
             //printf("k: %d, cc: %d\n", k, cc);
@@ -190,6 +192,7 @@ void moveAnim(const AnimationParam& param) {
         }
         i++;
     }
+
     }
     ind_t = indexes;
     uint16_t h = 0;
@@ -199,7 +202,9 @@ void moveAnim(const AnimationParam& param) {
     {
         //printf("h: %d, ind: %d\n",h, *ind_t);
         if(*ind_t < settings.pixelCount && *ind_t >= 0) {
+            //printf("000\n");
         FX.fxData[*ind_t] = colo;
+        //printf("111\n");
         }
         ind_t++;
         h++;
@@ -210,6 +215,8 @@ void moveAnim(const AnimationParam& param) {
         FX.rndShouldGo = -1;
         FX.animations2.RestartAnimation(param.index);
         }
+                //printf("anim 1\n");
+
     }
 
 void setupAnimations() {
@@ -220,6 +227,7 @@ void setupAnimations() {
 void setupAnimationsCyclon() {
     FX.animations2.StartAnimation(0, 15, fadeAnim);
     FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+15), animCyclon);
+    //printf("setupAnim\n");
 }
 
 void setRandomSeed() {

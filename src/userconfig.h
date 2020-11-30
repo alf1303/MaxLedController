@@ -3,4 +3,4 @@
 #define CLIENT_SSID "SolidNet2\0"
 #define CLIENT_PASSWORD "kmdsdobyf3kmdsdobyf3\0"
 #define PIN 2 //ignored for esp8266
-#define PIXELCOUNT 500
+#define MAXPIXELCOUNT 500 //dont increment this, becouse it cause crash
