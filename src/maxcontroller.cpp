@@ -211,7 +211,7 @@ void readUDP() {
       processRequest();
     }
 //printf("**udpreceive** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
-//printf("**udpreceive** fxNum: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
+printf("**udpreceive** reqSpeed: %d, fxSpeed: %f, fxParts: %d, fxR: %d, fxG: %d, fxB: %d\n", hData1[3], settings.fxSpeed, settings.fxParts, settings.fxColor.R, settings.fxColor.G, settings.fxColor.B);
 //printf("**udpreceive** fxSpread: %d, fxWidth: %d, fxParams: %d, reqFxParam: %d, fxSize: %d\n", settings.fxSpread, settings.fxWidth, settings.fxParams, request.fxParams, settings.fxSize);
   }
 }
