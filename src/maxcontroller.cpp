@@ -57,7 +57,7 @@ boolean connectWiFi() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.print("*.");
-   if (i > 30){              // Wait 8s for connecting to WiFI
+   if (i > 40){              // Wait 8s for connecting to WiFI
     state = false;
       break;
     }
