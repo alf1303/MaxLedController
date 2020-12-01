@@ -221,12 +221,12 @@ void moveAnim(const AnimationParam& param) {
 
 void setupAnimations() {
      FX.animations.StartAnimation(0, 7, fadeAnim);
-     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+15), moveAnim);
+     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+30), moveAnim);
 }
 
 void setupAnimationsCyclon() {
     FX.animations2.StartAnimation(0, 15, fadeAnim);
-    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+15), animCyclon);
+    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+30), animCyclon);
     //printf("setupAnim\n");
 }
 

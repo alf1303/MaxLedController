@@ -52,7 +52,8 @@ boolean connectWiFi() {
       printf("**** Connecting with new settings\n");
       WiFi.begin(settings.network, settings.password);
   }
-  Serial.printf("**** Connecting to WiFi. SSID: %s\n", settings.network);
+  Serial.printf("**** Connecti
+  ng to WiFi. SSID: %s\n", settings.network);
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.print("*.");
