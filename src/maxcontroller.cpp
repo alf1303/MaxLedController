@@ -83,7 +83,7 @@ void readUDP() {
     wifiUDP.read(hData, 5);
     command = hData[3];
     option = hData[4];
-    printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
+    //printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
     if(hData[0] == 'C' && hData[1] == 'P') {
       if(!compareIpAddresses(sourceIP, wifiUDP.remoteIP())) {
         sourceIP = wifiUDP.remoteIP();
@@ -320,7 +320,7 @@ void processFx() {
         FX.previousFxNum = 2;
       }
       if(FX.speedChanged) {
-        FX.animations.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000 + 15));
+        FX.animations.ChangeAnimationDuration(1, (uint16_t)((7 - speedNormal(settings.fxSpeed, 0.15, 7))*2000 + 20));
         FX.speedChanged = false;
       }
       FX.animations.UpdateAnimations();
@@ -334,7 +334,7 @@ void processFx() {
         FX.previousFxNum = 3;
       }
       if(FX.speedChanged) {
-        FX.animations2.ChangeAnimationDuration(1, (uint16_t)((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000 + 15));
+        FX.animations2.ChangeAnimationDuration(1, (uint16_t)((5 - speedNormal(settings.fxSpeed, 0.13, 5.0))*2000 + 20));
         FX.speedChanged = false;
       }
       FX.animations2.UpdateAnimations();

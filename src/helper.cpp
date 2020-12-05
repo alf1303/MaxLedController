@@ -74,6 +74,10 @@ void initSettings() {
     printf("*** playlist file not exists, creating...\n");
     savePlaylist();
   }
+  if(!LittleFS.exists(IP_FILE)) {
+    printf("***namefile not exists, creating...\n");
+    saveIpToFs();
+  }
     printf("Reading values from mode_file\n");
     loadSettingsFromFs();
     printf("Readed settings\n");
@@ -140,6 +144,16 @@ void saveIpToFs() {
   }
 }
 
+void loadIpFromFs() {
+  File f = LittleFS.open(IP_FILE, "r");
+  uint8_t temp[4];
+  f.read(temp, 4);
+  f.close();
+  for(int i = 0; i < 4; i++) {
+    sourceIP[i] = temp[i];
+  }
+}
+
 void saveNameToFs(bool first) {
   File f_name = LittleFS.open(NAME_FILE, "w");
   if(!f_name) {
@@ -203,6 +217,8 @@ void loadSettingsFromFs() {
   passfile.readBytes(settings.password, pSize);
   passfile.close();
   settings.password[pSize] = '\0';
+
+  loadIpFromFs();
 
   settings.netMode = temp[0];
   settings.pixelCount = temp[1] + (temp[2]<<8);
@@ -540,6 +556,22 @@ void test2() {
     showStrip();
     delay(200);
   }
+}
+
+//min represents maximum speed, max - minimum speed
+double speedNormal(double speed, double min, double max) {
+  double result;
+  double scale = (1.0*(max - min))/(SPEED_MAX_DOUBLE - SPEED_MIN_DOUBLE);
+  if((SPEED_MIN_DOUBLE == 0 && min == 0) || (SPEED_MIN_DOUBLE != 0 && min != 0)) {
+    result = speed*scale;
+  }
+  else if(SPEED_MIN_DOUBLE == 0) {
+    result = speed*scale + min;
+  }
+  else if(min == 0) {
+    result = speed*scale + max;
+  }
+  return result;
 }
 
 uint8_t speedToInt(double speed) {

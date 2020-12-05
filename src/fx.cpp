@@ -108,7 +108,7 @@ void moveAnim(const AnimationParam& param) {
         }
     }
 
-  void animCyclon(const AnimationParam& param) {
+  void fade(const AnimationParam& param) {
     float progress = NeoEase::Linear(param.progress);
     //float progress_step = progress/settings.fxParts;
     uint16_t fxParts_tmp = settings.fxParts == 1 ? settings.pixelCount : settings.fxParts;
@@ -221,12 +221,12 @@ void moveAnim(const AnimationParam& param) {
 
 void setupAnimations() {
      FX.animations.StartAnimation(0, 7, fadeAnim);
-     FX.animations.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+30), moveAnim);
+     FX.animations.StartAnimation(1, ((7 - speedNormal(settings.fxSpeed, 0.15, 7))*2000+20), moveAnim);
 }
 
 void setupAnimationsCyclon() {
     FX.animations2.StartAnimation(0, 15, fadeAnim);
-    FX.animations2.StartAnimation(1, ((SPEED_MAX_DOUBLE - settings.fxSpeed)*2000+30), animCyclon);
+    FX.animations2.StartAnimation(1, ((5 - speedNormal(settings.fxSpeed, 0.13, 5))*2000+20), fade);
     //printf("setupAnim\n");
 }
 

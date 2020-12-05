@@ -13,7 +13,7 @@
 #define PORT_IN 6454
 #define PORT_OUT 6455
 #define PORT_OUT_UPD 6457
-#define VERSION "v_0.1.2"
+#define VERSION "v_0.1.3"
 #define UNI 10
 #define MAIN_FILE "/mainfile"
 #define NAME_FILE "/namefile"
@@ -96,6 +96,7 @@ double speedToDouble(uint8_t speed);
 uint8_t speedToInt(double speed);
 double widthToDouble(uint8_t parts);
 uint8_t widthToInt(double parts);
+double speedNormal(double speed, double min, double max);
 
 void processFx();
 void setRandomSeed();
@@ -103,7 +104,7 @@ void setupAnimations();
 void setupAnimationsCyclon();
 void moveAnim(const AnimationParam& param);
 void fadeAnim(const AnimationParam& param);
-void animCyclon(const AnimationParam& param);
+void fade(const AnimationParam& param);
 void sinus();
 void sinusRGB();
 
