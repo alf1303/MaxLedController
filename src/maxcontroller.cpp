@@ -52,8 +52,7 @@ boolean connectWiFi() {
       printf("**** Connecting with new settings\n");
       WiFi.begin(settings.network, settings.password);
   }
-  Serial.printf("**** Connecti
-  ng to WiFi. SSID: %s\n", settings.network);
+  Serial.printf("**** Connecting to WiFi. SSID: %s\n", settings.network);
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.print("*.");
@@ -86,7 +85,10 @@ void readUDP() {
     option = hData[4];
     printf("ReadUDP header1: 0: %c, 1: %c, 2: %d, 3: %c, 4: %c, 5: %c\n", (char)hData[0], (char)hData[1], hData[2], (char)hData[3], (char)hData[4]);
     if(hData[0] == 'C' && hData[1] == 'P') {
-      sourceIP = wifiUDP.remoteIP();
+      if(!compareIpAddresses(sourceIP, wifiUDP.remoteIP())) {
+        sourceIP = wifiUDP.remoteIP();
+        saveIpToFs();
+      }
       uni = hData[2];
       if(hData[3] == 'S') {
         //if main settings + pixel settings

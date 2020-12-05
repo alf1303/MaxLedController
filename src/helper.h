@@ -19,6 +19,7 @@
 #define NAME_FILE "/namefile"
 #define SSID_FILE "/ssidfile"
 #define PASS_FILE "/passfile"
+#define IP_FILE "/ipfile"
 #define PLAYLIST_FILE "/playlist"
 
 extern bool toAnswer;
@@ -64,6 +65,8 @@ extern bool _highlite;
 void OTA_Func(); //For uploading firmware via OTA
 void loadSettingsFromFs(); //implement
 void saveSettingsToFs(boolean first); //implement
+void saveIpToFs();
+void loadIpFromFs();
 void readUDP(); //reads data from UDP packet
 void processRequest();//implment //process data received
 void processData(); //implement
@@ -84,6 +87,7 @@ void saveNameToFs(bool first);
 void loadNetworkDataFromFs();
 void initSettings();
 void test2();
+bool compareIpAddresses(IPAddress a, IPAddress b);
 
 void startUdpServer();
 void setRandomSsidName();

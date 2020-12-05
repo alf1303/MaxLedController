@@ -126,6 +126,20 @@ void saveSettingsToFs(boolean first) {
   printf("Saved Settings\n");
 }
 
+void saveIpToFs() {
+  File ipfile = LittleFS.open(IP_FILE, "w");
+    if(!ipfile) {
+    printf("**** Open ipfile for writing fails\n");
+  }
+  else{
+    for(int i = 0; i < 4; i++) {
+      ipfile.write(sourceIP[i]);
+    }
+    delay(50);
+    ipfile.close();
+  }
+}
+
 void saveNameToFs(bool first) {
   File f_name = LittleFS.open(NAME_FILE, "w");
   if(!f_name) {
@@ -352,8 +366,12 @@ void setMainSettings() {
     settings.fxParts = request.fxParts;
     settings.fxParams = request.fxParams;
     settings.fxSize = request.fxSize;
+    if(settings.fxSpeed != request.fxSpeed) {
+      FX.speedChanged = true;
+    }
     settings.fxSpeed = request.fxSpeed;
     settings.fxSpread = request.fxSpread;
+    settings.fxWidth = request.fxWidth;
     if(settings.fxReverse != (request.fxParams&1)) {
       FX.needRecalculate = true;
     }
@@ -580,6 +598,14 @@ double widthToDouble(uint8_t width) {
   }
   else if(WIDTH_MIN_DOUBLE == 0) {
     result = width*scale + WIDTH_MAX_DOUBLE;
+  }
+  return result;
+}
+
+bool compareIpAddresses(IPAddress a, IPAddress b) {
+  bool result = true;
+  for(int i = 0; i < 4; i++) {
+    if(a[i] != b[i]) return false;
   }
   return result;
 }
