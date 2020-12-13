@@ -15,6 +15,7 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   - password: 11223344
   
   Use GPIO3 (RX) pin for connecting leds.
+  
   Video, which demonstrates look and possibilities of mobileApp: https://youtu.be/RkItq3M3n-4
   
   Android App for controlling: <<<<<PUT LINK TO PLAYMARKET HERE >>>>>>
