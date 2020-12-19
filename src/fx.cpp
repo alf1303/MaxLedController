@@ -241,14 +241,14 @@ void setRandomSeed() {
 }
 
 void savePlaylist() {
-  printf("save playlist start\n");
+  printf("LOG: save playlist start\n");
   playlistPeriodMs = playlistPeriod*1000;
   ledsettings_t *plset = playlist;
   size_t plSize = settings.playlistSize;
   File f = LittleFS.open(PLAYLIST_FILE, "w");
   playlist_counter = 0;
   if(!f) {
-    printf("**** fail to open playlistFile for writing\n");
+    printf("***ERROR: failed to open playlistFile for writing\n");
   }
   else {
     f.write(plSize);
@@ -276,16 +276,16 @@ void savePlaylist() {
     }
     delay(10);
     f.close();
-    printf("**** playlist saved\n");
+    printf("LOG: playlist saved\n");
   }
 }
 
 void loadPlaylist() {
-  printf("loading playlist: size: %d\n", settings.playlistSize);
+  printf("INFO: Loading playlist: size: %d\n", settings.playlistSize);
   File f = LittleFS.open(PLAYLIST_FILE, "r");
-  printf("playlist file size: %d\n", f.size());
+  printf("INFO: playlist file size: %d\n", f.size());
   if(!f) {
-    printf("**** Error playlist file, while loading\n");
+    printf("***ERROR: Error playlist file, while loading\n");
   }
   else {
     settings.playlistSize = f.read();

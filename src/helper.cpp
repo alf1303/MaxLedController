@@ -59,28 +59,28 @@ uint8_t uni = UNI;
 
 void initSettings() {
   if(!LittleFS.exists(MAIN_FILE)) {
-    printf("**** main_file not exists, creating...\n");
+    printf("INFO: main_file not exists, creating...\n");
     saveSettingsToFs(true);
   }
   if(!LittleFS.exists(NAME_FILE)) {
-    printf("***namefile not exists, creating...\n");
+    printf("INFO: namefile not exists, creating...\n");
     saveNameToFs(true);
   }
   if(!LittleFS.exists(SSID_FILE)) {
-    printf("*** ssid or pass file not exists, creating...\n");
+    printf("INFO: ssid or pass file not exists, creating...\n");
     saveNetworkDataToFs(true);
   }
   if(!LittleFS.exists(PLAYLIST_FILE)) {
-    printf("*** playlist file not exists, creating...\n");
+    printf("INFO: playlist file not exists, creating...\n");
     savePlaylist();
   }
   if(!LittleFS.exists(IP_FILE)) {
-    printf("***namefile not exists, creating...\n");
+    printf("INFO: namefile not exists, creating...\n");
     saveIpToFs();
   }
-    printf("Reading values from mode_file\n");
+    printf("INFO: Loading values from modefile\n");
     loadSettingsFromFs();
-    printf("Readed settings\n");
+    printf("INFO: Loaded settings from memory\n");
     FX.setSettings(&settings);// copy settings address to FX object
 }
 
@@ -93,7 +93,7 @@ void saveSettingsToFs(boolean first) {
     f = LittleFS.open(MAIN_FILE, "w");
   }
   if(!f) {
-      printf("**** Open mainfile for writing fails\n");
+      printf("***ERROR: Open mainfile for writing fails\n");
   }
   else {
     uint8_t pixelCountLow = settings.pixelCount;
@@ -127,13 +127,13 @@ void saveSettingsToFs(boolean first) {
     delay(50);
     f.close();
   }
-  printf("Saved Settings\n");
+  printf("LOG: Saved Settings\n");
 }
 
 void saveIpToFs() {
   File ipfile = LittleFS.open(IP_FILE, "w");
     if(!ipfile) {
-    printf("**** Open ipfile for writing fails\n");
+    printf("***ERROR: Open ipfile for writing fails\n");
   }
   else{
     for(int i = 0; i < 4; i++) {
@@ -152,25 +152,26 @@ void loadIpFromFs() {
   for(int i = 0; i < 4; i++) {
     sourceIP[i] = temp[i];
   }
+  printf("INFO: Loaded last used application IP: %d.%d.%d.%d\n", sourceIP[0], sourceIP[1], sourceIP[2], sourceIP[3]);
 }
 
 void saveNameToFs(bool first) {
   File f_name = LittleFS.open(NAME_FILE, "w");
   if(!f_name) {
-    printf("**** Open namefile for writing fails\n");
+    printf("***ERROR: Open namefile for writing fails\n");
   }
   else {
     f_name.print(settings.name);
     delay(50);
     f_name.close();
-    printf("name saved\n");
+    printf("LOG: name saved\n");
   }
 }
 
 void saveNetworkDataToFs(boolean first) {
   File ssidfile = LittleFS.open(SSID_FILE, "w");
   if(!ssidfile) {
-    printf("**** Open ssidfile for writing fails\n");
+    printf("***ERROR: Open ssidfile for writing fails\n");
   }
   else{
     ssidfile.print(settings.network);
@@ -180,14 +181,14 @@ void saveNetworkDataToFs(boolean first) {
 
   File passfile = LittleFS.open(PASS_FILE, "w");
   if(!passfile) {
-    printf("**** Open passfile for writing fails\n");
+    printf("***ERROR: Open passfile for writing fails\n");
   }
   else {
     passfile.print(settings.password);
     delay(50);
     passfile.close();
   }
-  printf("Network settings saved\n");
+  printf("LOG: Network settings saved\n");
 }
 
 void loadSettingsFromFs() {
@@ -240,7 +241,6 @@ void loadSettingsFromFs() {
   settings.fxParts = temp[15];
   settings.fxFade = temp[16];
   settings.fxParams = temp[17];
-  printf("********************** readed: %d\n", temp[17]);
   settings.fxSpread = temp[18];
   settings.fxWidth = temp[19];
   settings.fxReverse = settings.fxParams&1;
@@ -264,7 +264,7 @@ void processGetCommand() {
     break;
   
   default:
-    printf("GET: unknown option\n");
+    printf("LOG: GET__ unknown option\n");
     break;
   }
 }
@@ -344,14 +344,14 @@ void processSetCommand() {
       break;
 
     default:
-      printf("SET: unknown option\n");
+      printf("LOG: SET__ unknown option\n");
       break;
   }
 }
 
 void setMainSettings() {
-  printf("Setting remote settings\n");
-  printf("mask: %d\n", mask);
+  printf("LOG: Changing settings from remote\n");
+  printf("LOG: mask: %d\n", mask);
   switch (mask)
   {
   case 1:
@@ -448,7 +448,7 @@ void setMainSettings() {
     saveSettingsToFs(false);
     break;
   default:
-    printf("**** Unknown mask\n");
+    printf("LOG: Unknown mask\n");
     break;
   }
     formAnswerInfo(PORT_OUT_UPD);

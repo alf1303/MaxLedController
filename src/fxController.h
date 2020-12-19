@@ -42,26 +42,25 @@ class FxController{
     }
 
     void clearFxData() {
-        printf("----------------------------- 14\n");
+        printf("LOG: Clearing fxData\n");
         //printf("pixCount: %d\n", sett->pixelCount);
         for(int i = 0; i < sett->pixelCount; i++) {
             fxData[i] = RgbColor(0, 0, 0);
             fxTemp[i] = RgbTemp_t(0, 0, 0);
             rgbData[i] = 0;
         }
-        printf("----------------------------- 15\n");
+        printf("LOG: cleared\n");
     }
 
     void initFxData() {
-          printf("----------------------------- 11\n");
+          printf("LOG: init fXData\n");
         printf("pixCount: %d\n", sett->pixelCount);
         fxData = new RgbColor[sett->pixelCount]();
         fxTemp = new RgbTemp_t[sett->pixelCount];
         rgbData = new double[sett->pixelCount];
         attackTemp = new RgbTemp_t[sett->pixelCount];
-                  printf("----------------------------- 12\n");
         clearFxData();
-                  printf("----------------------------- 13\n");
+                  printf("LOG: inited fxData\n");
     }
 
     void recalculateTempRGB() {
