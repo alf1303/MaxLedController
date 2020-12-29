@@ -28,7 +28,7 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
          my example command for Nodemcu: esptool.py --port COM6 write_flash -fm qio 0x00000 c:/firmware.bin (change COM6 to your port, with connected NodeMcu)
      
      During reboot first led of strip should blink three times in blue color. 
-  2) Get Android app from PlayMarket: LINK
+  2) Get Android app from PlayMarket: https://play.google.com/store/apps/details?id=alfarom.apps.ledcontroller
   3) Connect to network with name, starting with "MaxLedNet" with password: "11223344"
   4) Start Application, press SCAN button. In bottom part of screen should be a list of detected Esp8266s with uploaded current project.
   
