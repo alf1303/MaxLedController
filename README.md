@@ -18,7 +18,7 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   
   Video, which demonstrates look and possibilities of mobileApp: https://youtu.be/RkItq3M3n-4
   
-  Android App for controlling: <<<<<PUT LINK TO PLAYMARKET HERE >>>>>>
+  Android App for controlling: https://play.google.com/store/apps/details?id=alfarom.apps.ledcontroller
   
   1) Get project
      - download project, import it to VSCode with installed PlatformiO plugin, connect your Esp8266 with usb, flash
