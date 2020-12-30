@@ -3,6 +3,16 @@ PlatformiO project for controlling adressable leds (WS2812b, WS2813 and others) 
 It uses NeoPixelBus library (https://github.com/Makuna/NeoPixelBus) to drive leds. 
 It gives you possibility to set any color to your leds, create some effects, store them to palettes, create playlist from palettes. Also you can have some Esp8266 and you can control them
 from app separately or all together.
+
+Features:
+ - up to 500 leds, connected to microchip ESP8266
+ - up to 20 microchips ESP8266, connected to application via WiFI
+ - change colors
+ - create effects
+ - store color combinations and effects in application for further reuse
+ - recording playlist of stored scenes into microchip ESP8266 for playing back 
+   without application
+   
 After first start, it creates WiFi access point(also if it cannot connect ot your existing Wifi access point). After connecting to it you can change some settings:
  - name
  - led count
