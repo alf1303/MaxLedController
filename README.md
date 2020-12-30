@@ -30,6 +30,8 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   
   Android App for controlling: https://play.google.com/store/apps/details?id=alfarom.apps.ledcontroller
   
+  Application is created with Flutter, so it can be installed on iOs devices also. I can share project and some instructions, so you can install application on your iOs device manually(nedded real macOS device or with the help of virtual machine)
+  
   1) Get project
      - download project, import it to VSCode with installed PlatformiO plugin, connect your Esp8266 with usb, flash
      - download allready compiled binary file(firmware.bin in the root directory of project) and upload it to your Esp8266 with help of:
