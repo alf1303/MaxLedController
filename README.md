@@ -49,6 +49,5 @@ After first start, it creates WiFi access point(also if it cannot connect ot you
   - Effect section is in experimental mode, so its behaviour can be not very clear
   - connecting via router/access point is more stable than direct connection to Esp8266
   - closing and reopening application and power reset of Esp8266 can help when something is going wrong)
-  - application screenshot: https://github.com/alf130386/MaxLedController/blob/main/img/appScreenShot.jpg
   
   
