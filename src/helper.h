@@ -40,7 +40,7 @@ extern IPAddress sourceIP;
 extern uint8_t uni;
 
 //NeoPixelBus
-extern NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
+extern NeoPixelBus<NeoGrbFeature, NeoWs2811Method> strip;
 extern ledsettings_t *playlist; //array, containing data for settings to be played
 extern ledsettings_t *playlist_temp; //temp array
 extern NeoPixelAnimator animations; //cyclon effect

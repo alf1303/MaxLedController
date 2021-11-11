@@ -15,7 +15,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(MAXPIXELCOUNT, PIN);
 settings_t settings = {
     (char*)"esp001\0",
     netMode: 1,
-    pixelCount: 50,
+    pixelCount: 300,
     (char*)CLIENT_SSID, //ssid for client mode
     (char*)CLIENT_PASSWORD, //password for client mode
     playlistSize: 0,
@@ -33,7 +33,7 @@ settings_t settings = {
     fxSpread: 1,
     fxWidth: 1,
     startPixel: 0,
-    endPixel: 49,
+    endPixel: 299,
     fxReverse: false,
     fxAttack: false,
 };
@@ -549,14 +549,20 @@ void outToStrip() {
 }
 
 void test2() {
-  RgbColor blu = RgbColor(0, 0, 50);
+  RgbColor white_my = RgbColor(100, 100, 100);
   for(int i = 0; i < 3; i++) {
-    strip.SetPixelColor(settings.startPixel, blu);
-    strip.SetPixelColor(settings.endPixel, blu);
+    // strip.SetPixelColor(settings.startPixel, blu);
+    // strip.SetPixelColor(settings.endPixel, blu);
+    for(int j = 0; j < settings.pixelCount; j++) {
+      strip.SetPixelColor(j, white_my);
+    }
     showStrip();
     delay(100);
-    strip.SetPixelColor(settings.startPixel, black);
-    strip.SetPixelColor(settings.endPixel, black);
+    // strip.SetPixelColor(settings.startPixel, black);
+    // strip.SetPixelColor(settings.endPixel, black);
+    for(int j = 0; j < settings.pixelCount; j++) {
+      strip.SetPixelColor(j, black);
+    }
     showStrip();
     delay(200);
   }
