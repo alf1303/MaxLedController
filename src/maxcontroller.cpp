@@ -221,28 +221,28 @@ void readUDP() {
 void setup() {
   Serial.begin(115200);
   delay(10);
-  LittleFS.begin();
-  printf("LOG: Starting...\n");
-  //strip.Begin();
-  //LittleFS.format();
-  setRandomSsidName();
-  initSettings();////
-  FX.initFxData();///
+  // LittleFS.begin();
+  // printf("LOG: Starting...\n");
+  // //strip.Begin();
+  // //LittleFS.format();
+  // setRandomSsidName();
+  // initSettings();////
+  // FX.initFxData();///
   strip.Begin();
   printf("INFO: Running test flash\n");
   test2();
-  if(settings.netMode == 0) {
-    connectWiFi_AP();
-  }
-  else {
-    boolean res = connectWiFi();
-    if(!res) {
-      connectWiFi_AP();
-    }
-  }
-  startUdpServer();
-  OTA_Func();
-  updateSendTicker.attach(2, update);
+  // if(settings.netMode == 0) {
+  //   connectWiFi_AP();
+  // }
+  // else {
+  //   boolean res = connectWiFi();
+  //   if(!res) {
+  //     connectWiFi_AP();
+  //   }
+  // }
+  // startUdpServer();
+  // OTA_Func();
+  // updateSendTicker.attach(2, update);
   //printf("**setup** name: %s, network: %s, password: %s, count: %d, fxBlue: %d\n", settings.name, settings.network, settings.password, settings.pixelCount, settings.fxColor.B);
   //printf("**setup** pixelCount: %d, startPix: %d, endPix: %d, netMode: %d\n",settings.pixelCount, settings.startPixel, settings.endPixel, settings.netMode);
   //printf("**setup** fxWidth: %d, fxNum: %d, fxSpeed: %f, fxParts: %d, fxSpread: %d, setfxParam: %d\n",settings.fxWidth, settings.fxNumber, settings.fxSpeed, settings.fxParts, settings.fxSpread, settings.fxParams);
@@ -250,15 +250,60 @@ void setup() {
 }
 
 void loop() {
-  readUDP();
-  processFx();////
-  outToStrip();////
-  processPlaylist(); ////
-  if(toAnswer) {
-    formAnswerInfo(PORT_OUT_UPD);
-    toAnswer = false;
+  // readUDP();
+  // processFx();////
+  // outToStrip();////
+  // processPlaylist(); ////
+  // if(toAnswer) {
+  //   formAnswerInfo(PORT_OUT_UPD);
+  //   toAnswer = false;
+  // }
+  // ArduinoOTA.handle();
+
+  for(int i = 0; i < 300; i++) {
+    strip.SetPixelColor(i, red);
   }
-  ArduinoOTA.handle();
+  strip.Show();
+  delay(4000);
+
+    for(int i = 0; i < 300; i++) {
+    strip.SetPixelColor(i, green);
+  }
+  strip.Show();
+  delay(4000);
+
+    for(int i = 0; i < 300; i++) {
+    strip.SetPixelColor(i, blue);
+  }
+  strip.Show();
+  delay(4000);
+
+    for(int i = 0; i < 300; i++) {
+    strip.SetPixelColor(i, white_my);
+  }
+  strip.Show();
+  delay(4000);
+
+RgbColor colorset = black;
+boolean swap = false;
+int segments = 30;
+  for(int i = 0; i < 300; i++) {
+    if(i%segments == 0) {
+      swap = !swap;
+    }
+    if(swap) colorset = black;
+    else colorset = white_my;
+    strip.SetPixelColor(i, colorset);
+  }  
+  strip.Show();
+
+  long currtime = millis();
+  while((millis() - currtime) < 12000) {
+    strip.RotateRight(1);
+    strip.Show();
+    delay(200);
+  }
+
 }
 
 void setRandomSsidName() {

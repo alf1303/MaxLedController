@@ -44,6 +44,7 @@ RgbColor black(0, 0, 0);
 RgbColor red(255, 0, 0);
 RgbColor green(0, 255, 0);
 RgbColor blue(0, 0, 255);
+RgbColor white_my(255, 255, 255);
 RgbColor highliteColor(150, 150, 150);
 RgbColor beforeHLColor;
 bool _highlite = false;
@@ -549,14 +550,20 @@ void outToStrip() {
 }
 
 void test2() {
-  RgbColor blu = RgbColor(0, 0, 50);
+  RgbColor low_white = RgbColor(50, 50, 50);
   for(int i = 0; i < 3; i++) {
-    strip.SetPixelColor(settings.startPixel, blu);
-    strip.SetPixelColor(settings.endPixel, blu);
+    // strip.SetPixelColor(settings.startPixel, blu);
+    // strip.SetPixelColor(settings.endPixel, blu);
+    for(int j = 0; j < 300; j++) {
+      strip.SetPixelColor(j, low_white);
+    }
     showStrip();
     delay(100);
-    strip.SetPixelColor(settings.startPixel, black);
-    strip.SetPixelColor(settings.endPixel, black);
+    // strip.SetPixelColor(settings.startPixel, black);
+    // strip.SetPixelColor(settings.endPixel, black);
+    for(int j = 0; j < 300; j++) {
+      strip.SetPixelColor(j, black);
+    }
     showStrip();
     delay(200);
   }

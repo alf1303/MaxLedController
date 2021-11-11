@@ -58,6 +58,7 @@ extern RgbColor black;
 extern RgbColor red;
 extern RgbColor green;
 extern RgbColor blue;
+extern RgbColor white_my;
 extern RgbColor highliteColor;
 extern RgbColor beforeHLColor;
 extern bool _highlite;
