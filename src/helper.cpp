@@ -15,7 +15,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(MAXPIXELCOUNT, PIN);
 settings_t settings = {
     (char*)"esp001\0",
     netMode: 1,
-    pixelCount: 50,
+    pixelCount: 300,
     (char*)CLIENT_SSID, //ssid for client mode
     (char*)CLIENT_PASSWORD, //password for client mode
     playlistSize: 0,
@@ -33,7 +33,7 @@ settings_t settings = {
     fxSpread: 1,
     fxWidth: 1,
     startPixel: 0,
-    endPixel: 49,
+    endPixel: 299,
     fxReverse: false,
     fxAttack: false,
 };
