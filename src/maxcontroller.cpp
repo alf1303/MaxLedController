@@ -259,7 +259,7 @@ void loop() {
   //   toAnswer = false;
   // }
   // ArduinoOTA.handle();
-
+Serial.println("Cycle started...");
   for(int i = 0; i < 300; i++) {
     strip.SetPixelColor(i, red);
   }
@@ -303,6 +303,7 @@ int segments = 30;
     strip.Show();
     delay(200);
   }
+  Serial.println("Cycle ended");
 
 }
 
